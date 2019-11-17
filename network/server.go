@@ -51,6 +51,9 @@ func (server *Server) Start() {
 
 func (server *Server) setRoute() {
 	http.HandleFunc("/execute", server.getReq)
+	http.HandleFunc("/queryBlock", server.getQueryBlock)
+	http.HandleFunc("/query", server.getQuery)
+
 	//http.HandleFunc("/req", server.getReq)
 	//http.HandleFunc("/preprepare", server.getPrePrepare)
 	//http.HandleFunc("/prepare", server.getPrepare)
@@ -83,8 +86,38 @@ func (server *Server) setRoute() {
 //
 //}
 
+func (server *Server) getQuery(writer http.ResponseWriter, request *http.Request) {
+	var msg ExecutionRequest
+	err := json.NewDecoder(request.Body).Decode(&msg)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	res := database.ExecuteCommand(msg.Operation)
+	writer.Header().Set("Content-type", "application/text")
+	writer.Write([]byte(res))
+}
+
+func (server *Server) getQueryBlock(writer http.ResponseWriter, request *http.Request) {
+	var msg QueryBlockRequest
+	err := json.NewDecoder(request.Body).Decode(&msg)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	req, err := consensus.GetQueryRequest(msg.Key)
+	if err != nil {
+	}
+	response := sendRequest(req)
+	bodyBytes, err := ioutil.ReadAll(response.Body)
+	bodyString := string(bodyBytes)
+	fmt.Println(bodyString)
+	writer.Header().Set("Content-type", "application/text")
+	writer.Write([]byte(bodyString))
+}
+
 func (server *Server) getReq(writer http.ResponseWriter, request *http.Request) {
-	var msg RequestMsg
+	var msg ExecutionRequest
 	err := json.NewDecoder(request.Body).Decode(&msg)
 	if err != nil {
 		fmt.Println(err)
@@ -99,7 +132,8 @@ func (server *Server) getReq(writer http.ResponseWriter, request *http.Request) 
 	fmt.Println(bodyString)
 	command := strings.Split(msg.Operation, "=")[1]
 	res := database.ExecuteCommand(command)
-	fmt.Println("res:"+res)
+	writer.Header().Set("Content-type", "application/text")
+	writer.Write([]byte(res))
 }
 
 //func (server *Server) getPrePrepare(writer http.ResponseWriter, request *http.Request) {

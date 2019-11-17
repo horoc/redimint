@@ -1,0 +1,5 @@
+redis-config:
+  url: 127.0.0.1:6379
+  db: 0
+  password: Chenzhou@308
+

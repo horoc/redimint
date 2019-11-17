@@ -3,3 +3,4 @@ DecentralizedRedis
 *.log
 .idea
 tendermint.sock
+chain

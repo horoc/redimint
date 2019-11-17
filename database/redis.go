@@ -2,21 +2,26 @@ package database
 
 import (
 	"fmt"
+	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	"github.com/go-redis/redis"
 	"strings"
 )
 
 var Client *redis.Client
 
-func InitRedisClient(){
+func InitRedisClient() {
 	Client = NewRedisClient()
 }
 
-func NewRedisClient() *redis.Client{
+func NewRedisClient() *redis.Client {
+	fmt.Println(utils.Config.Redis.Url)
+	fmt.Println(utils.Config.Redis.Password)
+
+
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "Chenzhou@308", // no password set
-		DB:       0,  // use default DB
+		Addr:     utils.Config.Redis.Url,
+		Password: utils.Config.Redis.Password, // no password set
+		DB:       utils.Config.Redis.Db,       // use default DB
 	})
 	pong, err := client.Ping().Result()
 	fmt.Println(pong, err)
@@ -33,7 +38,7 @@ func ExecuteCommand(commond string) string {
 	fmt.Println(commond)
 	Client.Process(cmd)
 	s, e := cmd.Result()
-	if e!=nil{
+	if e != nil {
 		fmt.Println(e)
 	}
 	return fmt.Sprintf("%v", s)

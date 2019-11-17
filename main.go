@@ -6,6 +6,7 @@ import (
 	"github.com/chenzhou9513/DecentralizedRedis/consensus"
 	"github.com/chenzhou9513/DecentralizedRedis/database"
 	"github.com/chenzhou9513/DecentralizedRedis/network"
+	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	"github.com/dgraph-io/badger"
 	abciserver "github.com/tendermint/tendermint/abci/server"
 	"github.com/tendermint/tendermint/libs/log"
@@ -23,6 +24,8 @@ func init() {
 }
 
 func main() {
+	utils.InitConfig()
+
 	database.InitRedisClient()
 
 	db, err := badger.Open(badger.DefaultOptions("/tmp/badger"))
