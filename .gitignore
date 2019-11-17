@@ -1,0 +1,9 @@
+tendermint
+DecentralizedRedis
+*.log
+.idea
+./log/*
+redis.log
+dump.rdb
+tendermint.sock
+chain
