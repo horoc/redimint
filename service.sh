@@ -47,5 +47,10 @@ case "$1" in
   restart)
     stop
     start
+    ;;
+  newNode)
+    rm -rf ./chain
+    cp -fr ./conf/testnet/$2/* ./chain
+    ;;
 esac
 exit $RETVAL
