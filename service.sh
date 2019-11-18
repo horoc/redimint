@@ -50,6 +50,7 @@ case "$1" in
     ;;
   newNode)
     rm -rf ./chain
+    mkdir ./chain
     cp -fr ./conf/testnet/$2/* ./chain
     ;;
 esac
