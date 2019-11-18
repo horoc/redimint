@@ -47,7 +47,7 @@ func main() {
 	}
 	defer server.Stop()
 
-	httpServer := network.NewServer("localhost","30001")
+	httpServer := network.NewServer("127.0.0.1","30001")
 	httpServer.Start()
 
 
