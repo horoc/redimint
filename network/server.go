@@ -1,14 +1,19 @@
 package network
 
 import (
-	"bytes"
+	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/chenzhou9513/DecentralizedRedis/consensus"
 	"github.com/chenzhou9513/DecentralizedRedis/database"
+	"github.com/chenzhou9513/DecentralizedRedis/utils"
+	"github.com/satori/go.uuid"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type Server struct {
@@ -25,7 +30,6 @@ type Server struct {
 //
 //	return server
 //}
-
 
 func NewServer(host string, port string) *Server {
 	url := host + ":" + port
@@ -50,9 +54,21 @@ func (server *Server) Start() {
 }
 
 func (server *Server) setRoute() {
-	http.HandleFunc("/execute", server.getReq)
+
+	//区块链相关
+	http.HandleFunc("/chain/height", server.getChainHeightBlock)
+	http.HandleFunc("/chain/info", server.getChainInfo)
+	http.HandleFunc("/chain/state", server.getChainState)
+	http.HandleFunc("/chain/abci_query", server.getACBIQuery)
+	http.HandleFunc("/chain/tx",server.GetTxFromHash)
+	http.HandleFunc("/chain/search_tx",server.GetSearchTx)
+
+
+	http.HandleFunc("/execute", server.ExecuteReq)
 	http.HandleFunc("/queryBlock", server.getQueryBlock)
 	http.HandleFunc("/query", server.getQuery)
+	http.HandleFunc("/logs", server.getLogsFromHeight)
+	http.HandleFunc("/test_tps", server.testTps)
 
 	//http.HandleFunc("/req", server.getReq)
 	//http.HandleFunc("/preprepare", server.getPrePrepare)
@@ -66,25 +82,119 @@ func (server *Server) setRoute() {
 //func (server *Server) doRestore(writer http.ResponseWriter, request *http.Request) {
 //	//TODO 重新加载rdb和日志文件
 //}
-//
-//
-//
-//func (server *Server) SendConsensus(request *pbft.RequestMsg) *pbft.ComfirmedMsg {
-//	server.node.routeMsg(request)
-//	sequenceID := request.SequenceID
-//
-//	select {
-//	case <-server.node.ComfirmedEvent:
-//		return &pbft.ComfirmedMsg{
-//			Msg:        request.Operation,
-//			SequenceID: sequenceID,
-//		}
-//	case <-time.After(100 * time.Second):
-//		return nil
-//	}
-//	return nil
-//
-//}
+
+
+func (server *Server) getChainInfo(writer http.ResponseWriter, request *http.Request) {
+
+	min := request.URL.Query().Get("min")
+	max := request.URL.Query().Get("max")
+
+	minH, e := strconv.Atoi(min)
+	if e != nil {
+		fmt.Println(e)
+	}
+
+	maxH, e := strconv.Atoi(max)
+	if e != nil {
+		fmt.Println(e)
+	}
+
+	info := consensus.GetChainInfo(minH, maxH)
+	writer.Header().Set("Content-type", "application/json")
+	writer.Write(utils.StructToJson(info))
+}
+
+func (server *Server) getChainHeightBlock(writer http.ResponseWriter, request *http.Request) {
+
+	h := request.URL.Query().Get("h")
+	height, e := strconv.Atoi(h)
+	if e != nil {
+		fmt.Println(e)
+	}
+	block := consensus.GetBlockFromHeight(height)
+
+	var txHashList = make([]string,0)
+	for i:=0; i< len(block.Block.Data.Txs); i++{
+		txHashList = append(txHashList, fmt.Sprintf("%x", block.Block.Data.Txs[i].Hash()))
+	}
+
+	//fmt.Println(fmt.Sprintf("%x", block.Block.Data.Txs[0].Hash()))
+	//fmt.Println(block.Block.Data.Txs[0])
+
+	var obj map[string]interface{}
+	e = json.Unmarshal(utils.StructToJson(block), &obj)
+	if e != nil {
+		fmt.Println(e)
+	}
+	obj["tx_hash"] = txHashList
+	output, e := json.Marshal(obj)
+	if e != nil {
+		fmt.Println(e)
+	}
+	writer.Header().Set("Content-type", "application/json")
+	writer.Write(output)
+}
+
+func (server *Server) getACBIQuery(writer http.ResponseWriter, request *http.Request){
+	data := request.URL.Query().Get("data")
+	query := consensus.ABCIDataQuery("", []byte(data))
+	//TODO state里面有字段是Byte显示的
+	writer.Header().Set("Content-type", "application/json")
+	writer.Write(utils.StructToJson(query))
+}
+
+func (server *Server) getChainState(writer http.ResponseWriter, request *http.Request){
+
+	state := consensus.GetChainState()
+	//TODO state里面有字段是Byte显示的
+	fmt.Println(state.ValidatorInfo.PubKey)
+	writer.Header().Set("Content-type", "application/json")
+	writer.Write(utils.StructToJson(state))
+}
+
+func (server *Server) testTps(writer http.ResponseWriter, request *http.Request) {
+
+	url := "http://127.0.0.1:30001/execute"
+	payload := strings.NewReader("{\n    \"operation\": \"lpush xx 10\"\n}")
+	req, _ := http.NewRequest("POST", url, payload)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("cache-control", "no-cache")
+
+	t0 := time.Now()
+
+	response := &TpsTest{Details: make([]TestDetail, 0)}
+
+	for i := 0; i < 10; i++ {
+		detail := &TestDetail{}
+		ti0 := time.Now()
+		res, _ := http.DefaultClient.Do(req)
+		body, _ := ioutil.ReadAll(res.Body)
+		ti1 := time.Now()
+		detail.Time = fmt.Sprint(ti1.Sub(ti0))
+		detail.Response = string(body)
+		response.Details = append(response.Details, *detail)
+	}
+	t1 := time.Now()
+	response.TotalTime = fmt.Sprint(t1.Sub(t0))
+	response.TotalTx = 10
+	j, _ := json.Marshal(response)
+	writer.Header().Set("Content-type", "application/json")
+	writer.Write(j)
+}
+
+func (server *Server) getLogsFromHeight(writer http.ResponseWriter, request *http.Request) {
+	h, err := strconv.Atoi(request.URL.Query().Get("height"))
+	if err != nil {
+		fmt.Println(err)
+	}
+	logs := consensus.LogStoreApp.GetLogFromHeight(h)
+	writer.Header().Set("Content-type", "application/json")
+	j, err := json.Marshal(&QueryLogResponse{h, logs})
+	if err != nil {
+		fmt.Println(err)
+	}
+	writer.Write(j)
+}
 
 func (server *Server) getQuery(writer http.ResponseWriter, request *http.Request) {
 	var msg ExecutionRequest
@@ -94,7 +204,7 @@ func (server *Server) getQuery(writer http.ResponseWriter, request *http.Request
 		return
 	}
 	res := database.ExecuteCommand(msg.Operation)
-	writer.Header().Set("Content-type", "application/text")
+	writer.Header().Set("Content-type", "application/json")
 	writer.Write([]byte(res))
 }
 
@@ -108,94 +218,44 @@ func (server *Server) getQueryBlock(writer http.ResponseWriter, request *http.Re
 	req, err := consensus.GetQueryRequest(msg.Key)
 	if err != nil {
 	}
-	response := sendRequest(req)
+	response := utils.SendRequest(req)
 	bodyBytes, err := ioutil.ReadAll(response.Body)
 	bodyString := string(bodyBytes)
 	fmt.Println(bodyString)
-	writer.Header().Set("Content-type", "application/text")
+	writer.Header().Set("Content-type", "application/json")
 	writer.Write([]byte(bodyString))
 }
 
-func (server *Server) getReq(writer http.ResponseWriter, request *http.Request) {
+func (server *Server) GetTxFromHash(writer http.ResponseWriter, request *http.Request) {
+	hash := request.URL.Query().Get("hash")
+	bytes, e := hex.DecodeString(hash)
+	if e != nil {
+		fmt.Println(e)
+	}
+	tx := consensus.GetTx(bytes)
+	writer.Header().Set("Content-type", "application/json")
+	writer.Write(utils.StructToJson(tx))
+}
+
+func (server *Server)GetSearchTx(writer http.ResponseWriter, request *http.Request){
+	query := request.URL.Query().Get("query")
+	tx := consensus.SearchTx(query, 1, 30)
+	writer.Header().Set("Content-type", "application/json")
+	writer.Write(utils.StructToJson(tx))
+}
+
+
+func (server *Server) ExecuteReq(writer http.ResponseWriter, request *http.Request) {
 	var msg ExecutionRequest
 	err := json.NewDecoder(request.Body).Decode(&msg)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	req, err := consensus.GetBroadcastTxCommitRequest(msg.Operation)
-	if err != nil {
-	}
-	response := sendRequest(req)
-	bodyBytes, err := ioutil.ReadAll(response.Body)
-	bodyString := string(bodyBytes)
-	fmt.Println(bodyString)
-	command := strings.Split(msg.Operation, "=")[1]
-	res := database.ExecuteCommand(command)
-	writer.Header().Set("Content-type", "application/text")
-	writer.Write([]byte(res))
-}
-
-//func (server *Server) getPrePrepare(writer http.ResponseWriter, request *http.Request) {
-//	var msg pbft.PrePrepareMsg
-//	err := json.NewDecoder(request.Body).Decode(&msg)
-//	if err != nil {
-//		fmt.Println(err)
-//		return
-//	}
-//
-//	server.node.MsgEntrance <- &msg
-//}
-//
-//func (server *Server) getPrepare(writer http.ResponseWriter, request *http.Request) {
-//	var msg pbft.VoteMsg
-//	err := json.NewDecoder(request.Body).Decode(&msg)
-//	if err != nil {
-//		fmt.Println(err)
-//		return
-//	}
-//
-//	server.node.MsgEntrance <- &msg
-//}
-//
-//func (server *Server) getCommit(writer http.ResponseWriter, request *http.Request) {
-//	var msg pbft.VoteMsg
-//	err := json.NewDecoder(request.Body).Decode(&msg)
-//	if err != nil {
-//		fmt.Println(err)
-//		return
-//	}
-//
-//	server.node.MsgEntrance <- &msg
-//}
-//
-//func (server *Server) getReply(writer http.ResponseWriter, request *http.Request) {
-//	var msg pbft.ReplyMsg
-//	err := json.NewDecoder(request.Body).Decode(&msg)
-//	if err != nil {
-//		fmt.Println(err)
-//		return
-//	}
-//
-//	server.node.GetReply(&msg)
-//}
-
-func send(url string, msg []byte) {
-	buff := bytes.NewBuffer(msg)
-	fmt.Println("send : " + url)
-	http.Post("http://"+url, "application/json", buff)
-}
-func sendRequest(r *http.Request) (*http.Response) {
-	client := http.Client{}
-	fmt.Println("client request:")
-	fmt.Println(r)
-	response, e := client.Do(r)
-	if e != nil {
-		fmt.Println(e)
-	}
-	//response.Body.Close()
-	fmt.Println("client response:")
-	fmt.Println(response)
-	return response
-
+	u := uuid.NewV4()
+	u1 := binary.BigEndian.Uint64(u[0:8])
+	u2 := binary.BigEndian.Uint64(u[8:16])
+	commitMsg := consensus.BroadcastTxCommit(fmt.Sprintf("%x%x", u1, u2) + consensus.SEP + msg.Operation)
+	writer.Header().Set("Content-type", "application/json")
+	writer.Write(utils.StructToJson(commitMsg))
 }
