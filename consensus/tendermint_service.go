@@ -1,7 +1,7 @@
 package consensus
 
 import (
-	"fmt"
+	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	c "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -16,30 +16,29 @@ func initClient() {
 	tendermintHttpClient = c.NewHTTP(host, wsEndpoint)
 }
 
-func BroadcastTxCommit(op string) (*ctypes.ResultBroadcastTxCommit) {
+func BroadcastTxCommit(op CommitBody) (*ctypes.ResultBroadcastTxCommit) {
 
 	if tendermintHttpClient == nil {
 		initClient()
 	}
-	tx := types.Tx(op)
-	fmt.Println("hash")
-	fmt.Println(fmt.Sprintf("%x", tx.Hash()))
-
-	resultBroadcastTxCommit, e := tendermintHttpClient.BroadcastTxCommit(tx)
-	if e!=nil{
-		fmt.Println(e)
+	tx := types.Tx(utils.StructToJson(op))
+	resultBroadcastTxCommit, err := tendermintHttpClient.BroadcastTxCommit(tx)
+	if err != nil {
+		logger.Error(err)
+		return nil
 	}
 	return resultBroadcastTxCommit
 }
 
-func ABCIDataQuery(path string,  data []byte) *ctypes.ResultABCIQuery{
+func ABCIDataQuery(path string, data []byte) *ctypes.ResultABCIQuery {
 	if tendermintHttpClient == nil {
 		initClient()
 	}
 
-	resultABCIQuery, e := tendermintHttpClient.ABCIQuery(path, data)
-	if e != nil {
-		fmt.Println(e)
+	resultABCIQuery, err := tendermintHttpClient.ABCIQuery(path, data)
+	if err != nil {
+		logger.Error(err)
+		return nil
 	}
 	return resultABCIQuery
 }
@@ -49,9 +48,10 @@ func SearchTx(query string, page int, size int) *ctypes.ResultTxSearch {
 		initClient()
 	}
 
-	resultTx, e := tendermintHttpClient.TxSearch(query, true, page, size)
-	if e != nil {
-		fmt.Println(e)
+	resultTx, err := tendermintHttpClient.TxSearch(query, true, page, size)
+	if err != nil {
+		logger.Error(err)
+		return nil
 	}
 	return resultTx
 }
@@ -61,38 +61,41 @@ func GetTx(hash []byte) *ctypes.ResultTx {
 		initClient()
 	}
 
-	resultTx, e := tendermintHttpClient.Tx(hash, true)
-	if e != nil {
-		fmt.Println(e)
+	resultTx, err := tendermintHttpClient.Tx(hash, true)
+	if err != nil {
+		logger.Error(err)
+		return nil
 	}
 	return resultTx
 }
 
-func GetChainInfo(min int, max int) *ctypes.ResultBlockchainInfo{
+func GetChainInfo(min int, max int) *ctypes.ResultBlockchainInfo {
 	if tendermintHttpClient == nil {
 		initClient()
 	}
 	minH := int64(min)
 	maxH := int64(max)
 
-	resultBlockchainInfo, e := tendermintHttpClient.BlockchainInfo(minH, maxH)
-	if e != nil {
-		fmt.Println(e)
+	resultBlockchainInfo, err := tendermintHttpClient.BlockchainInfo(minH, maxH)
+	if err != nil {
+		logger.Error(err)
+		return nil
+
 	}
 	return resultBlockchainInfo
 }
 
-func GetChainState() *ctypes.ResultStatus{
+func GetChainState() *ctypes.ResultStatus {
 	if tendermintHttpClient == nil {
 		initClient()
 	}
-	resultStatus, e := tendermintHttpClient.Status()
-	if e != nil {
-		fmt.Println(e)
+	resultStatus, err := tendermintHttpClient.Status()
+	if err != nil {
+		logger.Error(err)
+		return nil
 	}
 	return resultStatus
 }
-
 
 func GetBlockFromHeight(h int) *ctypes.ResultBlock {
 
@@ -100,9 +103,10 @@ func GetBlockFromHeight(h int) *ctypes.ResultBlock {
 		initClient()
 	}
 	height := int64(h)
-	resultBlock, e := tendermintHttpClient.Block(&height)
-	if e != nil {
-		fmt.Println(e)
+	resultBlock, err := tendermintHttpClient.Block(&height)
+	if err != nil {
+		logger.Error(err)
+		return nil
 	}
 
 	//str := "http://" + utils.Config.Tendermint.Url + "/block"

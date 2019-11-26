@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	"github.com/go-redis/redis"
 	"strings"
@@ -14,10 +15,6 @@ func InitRedisClient() {
 }
 
 func NewRedisClient() *redis.Client {
-	fmt.Println(utils.Config.Redis.Url)
-	fmt.Println(utils.Config.Redis.Password)
-
-
 	client := redis.NewClient(&redis.Options{
 		Addr:     utils.Config.Redis.Url,
 		Password: utils.Config.Redis.Password, // no password set
@@ -30,16 +27,16 @@ func NewRedisClient() *redis.Client {
 
 func ExecuteCommand(commond string) string {
 	split := strings.Split(commond, " ")
-	var slice []interface{} = make([]interface{}, len(split))
+	slice := make([]interface{}, len(split))
 	for i := 0; i < len(split); i++ {
 		slice[i] = split[i]
 	}
 	cmd := redis.NewCmd(slice...)
-	fmt.Println(commond)
 	Client.Process(cmd)
-	s, e := cmd.Result()
-	if e != nil {
-		fmt.Println(e)
+	s, err := cmd.Result()
+	if err != nil {
+		logger.Error(err)
+		return err.Error()
 	}
 	return fmt.Sprintf("%v", s)
 }

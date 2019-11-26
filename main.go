@@ -4,41 +4,38 @@ import (
 	"fmt"
 	"github.com/chenzhou9513/DecentralizedRedis/consensus"
 	"github.com/chenzhou9513/DecentralizedRedis/database"
+	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/network"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	abciserver "github.com/tendermint/tendermint/abci/server"
 	"github.com/tendermint/tendermint/libs/log"
-	logger"github.com/sirupsen/logrus"
+
 	"os"
 	"os/signal"
 	"syscall"
 )
 
-
-
+func Init() {
+	utils.InitConfig()
+	utils.InitNodeKey()
+	logger.InitLogger()
+	database.InitRedisClient()
+	consensus.InitLogStoreApplication()
+}
 
 func main() {
 
-
-
-	logger.Info("Init service...")
-	logger.Info("Init service...")
-	logger.Info("Init service...")
-	logger.Info("Init service...")
-
-	utils.InitConfig()
-	database.InitRedisClient()
-	consensus.InitLogStoreApplication()
-	tendermintlogger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+	Init()
+	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	server := abciserver.NewSocketServer(consensus.SocketAddr, consensus.LogStoreApp)
-	server.SetLogger(tendermintlogger)
+	server.SetLogger(logger)
 	if err := server.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, "error starting socket server: %v", err)
 		os.Exit(1)
 	}
 	defer server.Stop()
 
-	httpServer := network.NewServer("0.0.0.0","30001")
+	httpServer := network.NewServer("0.0.0.0", "30001")
 	httpServer.Start()
 
 	c := make(chan os.Signal, 1)

@@ -1,13 +1,11 @@
-package logrus
+package logger
 
 import (
-	"fmt"
 	"os"
 )
-import  "github.com/sirupsen/logrus"
+import "github.com/sirupsen/logrus"
 
 var logger = logrus.New()
-
 
 func Info(args ...interface{}) {
 	logger.Info(args...)
@@ -16,8 +14,11 @@ func Info(args ...interface{}) {
 func Debug(args ...interface{}) {
 	logger.Debug(args...)
 }
+func Error(args ...interface{}) {
+	logger.Error(args...)
+}
 
-func InitLogger(){
+func InitLogger() {
 	customFormatter := new(logrus.TextFormatter)
 	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
 	customFormatter.FullTimestamp = true
@@ -25,9 +26,10 @@ func InitLogger(){
 
 	logger.SetFormatter(customFormatter)
 
-	f, err := os.OpenFile("./log/server.log", os.O_WRONLY | os.O_CREATE, 0755)
+	f, err := os.OpenFile("./log/server.log", os.O_WRONLY|os.O_CREATE, 0755)
 	if err != nil {
-		fmt.Println(err)
+		logger.Error(err)
+		return
 	}
 	logger.SetOutput(f)
 	logger.SetLevel(logrus.InfoLevel)

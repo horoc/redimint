@@ -2,11 +2,20 @@ package consensus
 
 import (
 	"fmt"
+	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	"net/http"
 	"net/url"
 	"os/exec"
 )
+
+
+type CommitBody struct {
+	Operation string `json:"operation"`
+	Sequence string `json:"sequence"`
+	Signature string `json:"signature"`
+}
+
 
 func GetBroadcastTxCommitRequest(operation string) (*http.Request, error) {
 	str := "http://" + utils.Config.Tendermint.Url + "/broadcast_tx_commit"
@@ -14,11 +23,11 @@ func GetBroadcastTxCommitRequest(operation string) (*http.Request, error) {
 	q, _ := url.ParseQuery(u.RawQuery)
 	q.Add("tx", "\""+operation+"\"")
 	u.RawQuery = q.Encode()
-	fmt.Println(u)
-	request, e := http.NewRequest("GET", fmt.Sprint(u), nil)
+	request, err := http.NewRequest("GET", fmt.Sprint(u), nil)
 
-	if e != nil {
-		fmt.Println(e)
+	if err != nil {
+		logger.Error(err)
+		return nil, err
 	}
 	return request, nil
 }
@@ -29,10 +38,10 @@ func GetChainHeightBlockRequest(height string) (*http.Request, error) {
 	q, _ := url.ParseQuery(u.RawQuery)
 	q.Add("height", height)
 	u.RawQuery = q.Encode()
-	fmt.Println(u)
-	request, e := http.NewRequest("GET", fmt.Sprint(u), nil)
-	if e != nil {
-		fmt.Println(e)
+	request, err := http.NewRequest("GET", fmt.Sprint(u), nil)
+	if err != nil {
+		logger.Error(err)
+		return nil, err
 	}
 	return request, nil
 }
@@ -43,22 +52,20 @@ func GetQueryRequest(operation string) (*http.Request, error) {
 	q, _ := url.ParseQuery(u.RawQuery)
 	q.Add("data", "\""+operation+"\"")
 	u.RawQuery = q.Encode()
-	fmt.Println(u)
-	request, e := http.NewRequest("GET", fmt.Sprint(u), nil)
+	request, err := http.NewRequest("GET", fmt.Sprint(u), nil)
 
-	if e != nil {
-		fmt.Println(e)
+	if err != nil {
+		logger.Error(err)
+		return nil, err
 	}
 	return request, nil
 }
 
 func SendBroadcastTxCommitRequest(operation string) (string, error) {
-	fmt.Println(operation)
-	fmt.Println("localhost:26657/broadcast_tx_commit?tx=\"" + operation + "\"")
-	bytes, e := exec.Command("curl", "-s", "localhost:26657/broadcast_tx_commit?tx=\""+operation+"\"").Output()
-	if e != nil {
-		//log.Fatal(err)
+	bytes, err := exec.Command("curl", "-s", "localhost:26657/broadcast_tx_commit?tx=\""+operation+"\"").Output()
+	if err != nil {
+		logger.Error(err)
+		return "", err
 	}
-	fmt.Print(string(bytes))
-	return string(bytes), e
+	return string(bytes), nil
 }

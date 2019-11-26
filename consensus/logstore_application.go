@@ -1,11 +1,11 @@
 package consensus
 
 import (
-	"bytes"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/chenzhou9513/DecentralizedRedis/database"
+	"github.com/chenzhou9513/DecentralizedRedis/logger"
+	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	"github.com/dgraph-io/badger"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"go.uber.org/atomic"
@@ -20,20 +20,21 @@ import (
 		1. logIndex : log == 1 : set x 1
 		2. heightIndex : logList == 1 : set a 1 || set c 1 || ...
 
- */
+*/
 
 type LogStoreApplication struct {
 	db                *badger.DB
 	currentBatch      *badger.Txn
 	currentHeight     atomic.Int64
 	currentHeightList []string
-	logSize    atomic.Int64
+	logSize           atomic.Int64
 }
 
 var _ abcitypes.Application = (*LogStoreApplication)(nil)
 
 var LogStoreApp *LogStoreApplication
 var SocketAddr string
+
 const SEP string = "||"
 
 func init() {
@@ -65,26 +66,31 @@ func (LogStoreApplication) SetOption(req abcitypes.RequestSetOption) abcitypes.R
 }
 
 func (app *LogStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
-
 	response := abcitypes.ResponseDeliverTx{}
 	code := app.isValid(req.Tx)
 	if code != 0 {
 		return abcitypes.ResponseDeliverTx{Code: code}
 	}
-	parts := bytes.Split(req.Tx, []byte(SEP))
-	seq, value := parts[0], parts[1]
+	commitBody := CommitBody{}
+	utils.JsonToStruct(req.Tx, &commitBody)
+
+	//parts := bytes.Split(req.Tx, []byte(SEP))
+	//seq, value := parts[0], parts[1]
 	app.logSize.Add(1)
-	err := app.currentBatch.Set([]byte(strconv.FormatInt(app.logSize.Load(),10)), value)
-	app.currentHeightList = append(app.currentHeightList, string(value))
+	err := app.currentBatch.Set([]byte(strconv.FormatInt(app.logSize.Load(), 10)), []byte(commitBody.Operation))
+	app.currentHeightList = append(app.currentHeightList, commitBody.Operation)
 	//TODO 事务提交
-	res := database.ExecuteCommand(string(value))
+	res := database.ExecuteCommand(commitBody.Operation)
 	response.Code = 0
-	info,err := json.Marshal(struct {
-		Sequence string
-		Result string
-	}{string(seq), res})
-	response.Info = string(info)
+	//info, err := json.Marshal(struct {
+	//	Operation string
+	//	Sequence  string
+	//	Signature string
+	//	Result    string
+	//}{commitBody.Operation, commitBody.Sequence, commitBody.Signature, res})
+	response.Info = "Result:"+res
 	if err != nil {
+		logger.Error(err)
 		panic(err)
 	}
 	return response
@@ -95,13 +101,13 @@ func (app *LogStoreApplication) GetLogFromHeight(h int) []string {
 	err := app.db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(fmt.Sprintf("h%d", h)))
 		if err != nil && err != badger.ErrKeyNotFound {
+			logger.Error(err)
 			return err
 		}
 		if err == badger.ErrKeyNotFound {
 			return nil
 		} else {
 			return item.Value(func(val []byte) error {
-				fmt.Println("item"+string(val))
 				split := strings.Split(string(val), SEP)
 				for _, v := range split {
 					logs = append(logs, v)
@@ -112,6 +118,8 @@ func (app *LogStoreApplication) GetLogFromHeight(h int) []string {
 
 	})
 	if err != nil {
+		logger.Error(err)
+		panic(err)
 	}
 	return logs
 }
@@ -121,20 +129,22 @@ func (app *LogStoreApplication) Commit() abcitypes.ResponseCommit {
 	txn := app.db.NewTransaction(true)
 	err := txn.Set([]byte(fmt.Sprintf("h%d", app.currentHeight.Load())), []byte(strings.Join(app.currentHeightList, SEP)))
 	if err != nil {
-		fmt.Println(err)
+		logger.Error(err)
+		panic(err)
 	}
 	err = txn.Commit()
 	if err != nil {
-		fmt.Println(err)
+		logger.Error(err)
+		panic(err)
 	}
 	return abcitypes.ResponseCommit{Data: []byte{}}
 }
 func (app *LogStoreApplication) Query(reqQuery abcitypes.RequestQuery) (resQuery abcitypes.ResponseQuery) {
-	fmt.Println("get query")
 	resQuery.Key = reqQuery.Data
 	err := app.db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(reqQuery.Data)
 		if err != nil && err != badger.ErrKeyNotFound {
+			logger.Error(err)
 			return err
 		}
 		if err == badger.ErrKeyNotFound {
@@ -149,6 +159,7 @@ func (app *LogStoreApplication) Query(reqQuery abcitypes.RequestQuery) (resQuery
 		return nil
 	})
 	if err != nil {
+		logger.Error(err)
 		panic(err)
 	}
 	return
