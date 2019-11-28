@@ -7,25 +7,27 @@ import (
 	"github.com/chenzhou9513/DecentralizedRedis/consensus"
 	"github.com/chenzhou9513/DecentralizedRedis/database"
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
+	"github.com/chenzhou9513/DecentralizedRedis/models"
+	"github.com/chenzhou9513/DecentralizedRedis/service"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	"github.com/satori/go.uuid"
-	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
-	"strings"
 	"time"
 )
 
 type Server struct {
 	url  string
 	port string
-
+	service service.Service
 }
 
 func NewServer(host string, port string) *Server {
+	service := service.ServiceImpl{}
 	url := host + ":" + port
 	//node := NewNode(nodeID, url);
-	server := &Server{url, port}
+	server := &Server{url, port,service}
 	server.setRoute()
 	return server
 }
@@ -45,14 +47,19 @@ func (server *Server) setRoute() {
 	http.HandleFunc("/chain/info", server.getChainInfo)
 	http.HandleFunc("/chain/state", server.getChainState)
 	http.HandleFunc("/chain/abci_query", server.getACBIQuery)
-	http.HandleFunc("/chain/tx", server.GetTxFromHash)
-	http.HandleFunc("/chain/search_tx", server.GetSearchTx)
+	http.HandleFunc("/chain/tx", server.getTxFromHash)
+	http.HandleFunc("/chain/search_tx", server.getSearchTx)
 
 	//db execute
-	http.HandleFunc("/execute", server.ExecuteReq)
+	http.HandleFunc("/execute", server.executeReq)
+	http.HandleFunc("/db/execute", server.execute)
+
 
 	//db query
 	http.HandleFunc("/query", server.getQuery)
+
+	//redis
+	http.HandleFunc("/db/dump", server.dump)
 
 	http.HandleFunc("/logs", server.getLogsFromHeight)
 	http.HandleFunc("/test_tps", server.testTps)
@@ -106,10 +113,6 @@ func (server *Server) getChainHeightBlock(writer http.ResponseWriter, request *h
 	for i := 0; i < len(block.Block.Data.Txs); i++ {
 		txHashList = append(txHashList, fmt.Sprintf("%x", block.Block.Data.Txs[i].Hash()))
 	}
-
-	//fmt.Println(fmt.Sprintf("%x", block.Block.Data.Txs[0].Hash()))
-	//fmt.Println(block.Block.Data.Txs[0])
-
 	var obj map[string]interface{}
 	err = json.Unmarshal(utils.StructToJson(block), &obj)
 	if err != nil {
@@ -144,27 +147,46 @@ func (server *Server) getChainState(writer http.ResponseWriter, request *http.Re
 
 func (server *Server) testTps(writer http.ResponseWriter, request *http.Request) {
 
-	url := "http://127.0.0.1:30001/execute"
-	payload := strings.NewReader("{\n    \"operation\": \"lpush xx 10\"\n}")
-	req, _ := http.NewRequest("POST", url, payload)
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("cache-control", "no-cache")
+	//url := "http://127.0.0.1:30001/execute"
+	//payload := strings.NewReader("{\n    \"operation\": \"lpush xx 10\"\n}")
+	//req, _ := http.NewRequest("POST", url, payload)
+	//req.Header.Add("Content-Type", "application/json")
+	//req.Header.Add("cache-control", "no-cache")
 
-	t0 := time.Now()
+
 
 	response := &TpsTest{Details: make([]TestDetail, 0)}
 
-	for i := 0; i < 10; i++ {
-		detail := &TestDetail{}
-		ti0 := time.Now()
-		res, _ := http.DefaultClient.Do(req)
-		body, _ := ioutil.ReadAll(res.Body)
-		ti1 := time.Now()
-		detail.Time = fmt.Sprint(ti1.Sub(ti0))
-		detail.Response = string(body)
-		response.Details = append(response.Details, *detail)
-	}
+	//for i := 0; i < 10; i++ {
+	//	detail := &TestDetail{}
+	//	ti0 := time.Now()
+	//	res, _ := http.DefaultClient.Do(req)
+	//	body, _ := ioutil.ReadAll(res.Body)
+	//	ti1 := time.Now()
+	//	detail.Time = fmt.Sprint(ti1.Sub(ti0))
+	//	detail.Response = string(body)
+	//	response.Details = append(response.Details, *detail)
+	//}
+
+	t0 := time.Now()
+	consensus.TestTendermintTime([]byte("asdasdasdasdasdasdasd"))
 	t1 := time.Now()
+	fmt.Printf("time 1 %s",fmt.Sprint(t1.Sub(t0)))
+
+
+	t0 = time.Now()
+	str := "http://" + utils.Config.Tendermint.Url + "/broadcast_tx_commit"
+	u, _ := url.Parse(str)
+	q, _ := url.ParseQuery(u.RawQuery)
+	q.Add("tx", "\""+"asdasdasdasdasdasdasd"+"\"")
+	u.RawQuery = q.Encode()
+	request, _ = http.NewRequest("GET", fmt.Sprint(u), nil)
+	res := utils.SendRequest(request)
+	fmt.Println(res)
+	t1 = time.Now()
+	fmt.Printf("time 2 %s",fmt.Sprint(t1.Sub(t0)))
+
+
 	response.TotalTime = fmt.Sprint(t1.Sub(t0))
 	response.TotalTx = 10
 	j, _ := json.Marshal(response)
@@ -202,7 +224,7 @@ func (server *Server) getQuery(writer http.ResponseWriter, request *http.Request
 	writer.Write(utils.StructToJson(resBody))
 }
 
-func (server *Server) GetTxFromHash(writer http.ResponseWriter, request *http.Request) {
+func (server *Server) getTxFromHash(writer http.ResponseWriter, request *http.Request) {
 	hash := request.URL.Query().Get("hash")
 	bytes := utils.HexToByte(hash)
 	tx := consensus.GetTx(bytes)
@@ -219,14 +241,28 @@ func (server *Server) GetTxFromHash(writer http.ResponseWriter, request *http.Re
 	writer.Write(utils.StructToJson(obj))
 }
 
-func (server *Server) GetSearchTx(writer http.ResponseWriter, request *http.Request) {
+func (server *Server) getSearchTx(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query().Get("query")
 	tx := consensus.SearchTx(query, 1, 30)
 	writer.Header().Set("Content-type", "application/json")
 	writer.Write(utils.StructToJson(tx))
 }
 
-func (server *Server) ExecuteReq(writer http.ResponseWriter, request *http.Request) {
+
+func (server *Server) execute(writer http.ResponseWriter, request *http.Request) {
+	var msg ExecutionRequest
+	err := json.NewDecoder(request.Body).Decode(&msg)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	res := server.service.Execute(&models.ExecuteRequest{msg.Operation})
+
+	writer.Header().Set("Content-type", "application/json")
+	writer.Write(utils.StructToJson(res))
+}
+
+func (server *Server) executeReq(writer http.ResponseWriter, request *http.Request) {
 	var msg ExecutionRequest
 	err := json.NewDecoder(request.Body).Decode(&msg)
 
@@ -234,7 +270,7 @@ func (server *Server) ExecuteReq(writer http.ResponseWriter, request *http.Reque
 		logger.Error(err)
 		return
 	}
-	op := &consensus.CommitBody{}
+	op := &models.TxCommitBody{}
 
 	u := uuid.NewV4()
 	u1 := binary.BigEndian.Uint64(u[0:8])
@@ -249,7 +285,13 @@ func (server *Server) ExecuteReq(writer http.ResponseWriter, request *http.Reque
 
 	op.Signature = utils.SignToHex(sign)
 	op.Operation = msg.Operation
-	commitMsg := consensus.BroadcastTxCommit(*op)
+	commitMsg := consensus.BroadcastTxCommit(op)
 	writer.Header().Set("Content-type", "application/json")
 	writer.Write(utils.StructToJson(commitMsg))
+}
+
+func (server *Server) dump(writer http.ResponseWriter, request *http.Request) {
+	val := database.DumpRDBFile()
+	writer.Header().Set("Content-type", "application/json")
+	writer.Write([]byte(val))
 }

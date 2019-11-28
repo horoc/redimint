@@ -1,22 +1,35 @@
 package consensus
 
 import (
+	"fmt"
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
+	"github.com/chenzhou9513/DecentralizedRedis/models"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	c "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 )
 
 var tendermintHttpClient *c.HTTP
 
 func initClient() {
-	var host = "http://" + utils.Config.Tendermint.Url
-	var wsEndpoint = "/websocket"
+	var host = "tcp://" + utils.Config.Tendermint.Url
+	var wsEndpoint = "./websocket"
 	tendermintHttpClient = c.NewHTTP(host, wsEndpoint)
 }
 
-func BroadcastTxCommit(op CommitBody) (*ctypes.ResultBroadcastTxCommit) {
+func TestTendermintTime(tx []byte) (*ctypes.ResultBroadcastTxCommit){
+	if tendermintHttpClient == nil {
+		initClient()
+	}
+	resultBroadcastTxCommit, _ := tendermintHttpClient.BroadcastTxCommit(tx)
+	return resultBroadcastTxCommit
+}
+
+func BroadcastTxCommit(op *models.TxCommitBody) (*ctypes.ResultBroadcastTxCommit) {
 
 	if tendermintHttpClient == nil {
 		initClient()
@@ -29,6 +42,38 @@ func BroadcastTxCommit(op CommitBody) (*ctypes.ResultBroadcastTxCommit) {
 	}
 	return resultBroadcastTxCommit
 }
+
+func BroadcastTxCommitUseHttp(op *models.TxCommitBody) (*ctypes.ResultBroadcastTxCommit) {
+
+	str := "http://" + utils.Config.Tendermint.Url + "/broadcast_tx_commit"
+	u, _ := url.Parse(str)
+	q, _ := url.ParseQuery(u.RawQuery)
+
+	json := utils.StructToJson(op)
+	hex := utils.ByteToHex(json)
+	fmt.Println(hex)
+
+	q.Add("tx", "\""+hex+"\"")
+
+	u.RawQuery = q.Encode()
+	req, _ := http.NewRequest("GET", fmt.Sprint(u), nil)
+	res := utils.SendRequest(req)
+	bytes, err := ioutil.ReadAll(res.Body)
+	if err!=nil{
+		logger.Error(err)
+	}
+	//解析 ，把result拿出来放进去 "jsonrpc": "2.0",
+	//    "id": "",
+	//    "result":
+	var result = &ctypes.ResultBroadcastTxCommit{}
+	utils.JsonToStruct(bytes, result)
+	if err != nil {
+		logger.Error(err)
+		return nil
+	}
+	return result
+}
+
 
 func ABCIDataQuery(path string, data []byte) *ctypes.ResultABCIQuery {
 	if tendermintHttpClient == nil {

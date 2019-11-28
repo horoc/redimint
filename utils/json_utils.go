@@ -25,7 +25,7 @@ func JsonToStruct(j []byte, s interface{}) {
 }
 
 func ByteToHex(b []byte) string{
-	return hex.EncodeToString(b)
+	return fmt.Sprintf("%X",b)
 }
 
 func HexToByte(s string) []byte{

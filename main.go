@@ -16,8 +16,8 @@ import (
 )
 
 func Init() {
+	utils.InitKey()
 	utils.InitConfig()
-	utils.InitNodeKey()
 	logger.InitLogger()
 	database.InitRedisClient()
 	consensus.InitLogStoreApplication()

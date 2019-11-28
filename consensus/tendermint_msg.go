@@ -10,13 +10,6 @@ import (
 )
 
 
-type CommitBody struct {
-	Operation string `json:"operation"`
-	Sequence string `json:"sequence"`
-	Signature string `json:"signature"`
-}
-
-
 func GetBroadcastTxCommitRequest(operation string) (*http.Request, error) {
 	str := "http://" + utils.Config.Tendermint.Url + "/broadcast_tx_commit"
 	u, _ := url.Parse(str)

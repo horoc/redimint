@@ -25,6 +25,11 @@ func NewRedisClient() *redis.Client {
 	return client
 }
 
+func DumpRDBFile() string{
+	save := Client.Save()
+	return save.Val()
+}
+
 func ExecuteCommand(commond string) string {
 	split := strings.Split(commond, " ")
 	slice := make([]interface{}, len(split))
