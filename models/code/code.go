@@ -7,6 +7,7 @@ const (
 	CodeTypeEncodingError    = 3
 )
 
+
 func InfoWithDetail(p int, msg string) string {
 	return Info(p) + ": " + msg
 }

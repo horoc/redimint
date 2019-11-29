@@ -87,7 +87,7 @@ func (app *LogStoreApplication) isValid(tx []byte) (uint32, string) {
 	pubkey := ed25519.PubKeyEd25519{}
 	copy(pubkey[:], app.valAddrToPubKeyMap[commitBody.Address].Data)
 
-	if pubkey.VerifyBytes([]byte(commitBody.Operation), utils.HexToByte(commitBody.Signature)) != true {
+	if pubkey.VerifyBytes(utils.StructToJson(commitBody.Data), utils.HexToByte(commitBody.Signature)) != true {
 		return c.CodeTypeInvalidSign, c.Info(c.CodeTypeInvalidSign)
 	}
 
@@ -145,10 +145,10 @@ func (app *LogStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcity
 	utils.JsonToStruct(req.Tx, &commitBody)
 
 	app.logSize.Add(1)
-	err := app.currentBatch.Set([]byte(strconv.FormatInt(app.logSize.Load(), 10)), []byte(commitBody.Operation))
-	app.currentHeightList = append(app.currentHeightList, commitBody.Operation)
+	err := app.currentBatch.Set([]byte(strconv.FormatInt(app.logSize.Load(), 10)), []byte(commitBody.Data.Operation))
+	app.currentHeightList = append(app.currentHeightList, commitBody.Data.Operation)
 	//TODO 事务提交
-	res := database.ExecuteCommand(commitBody.Operation)
+	res := database.ExecuteCommand(commitBody.Data.Operation)
 	response.Code = c.CodeTypeOK
 	response.Data = []byte("Result:" + res)
 	if err != nil {

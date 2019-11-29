@@ -21,14 +21,6 @@ func initClient() {
 	tendermintHttpClient = c.NewHTTP(host, wsEndpoint)
 }
 
-func TestTendermintTime(tx []byte) (*ctypes.ResultBroadcastTxCommit){
-	if tendermintHttpClient == nil {
-		initClient()
-	}
-	resultBroadcastTxCommit, _ := tendermintHttpClient.BroadcastTxCommit(tx)
-	return resultBroadcastTxCommit
-}
-
 func BroadcastTxCommit(op *models.TxCommitBody) (*ctypes.ResultBroadcastTxCommit) {
 
 	if tendermintHttpClient == nil {
@@ -42,6 +34,22 @@ func BroadcastTxCommit(op *models.TxCommitBody) (*ctypes.ResultBroadcastTxCommit
 	}
 	return resultBroadcastTxCommit
 }
+
+func BroadcastTxSync(op *models.TxCommitBody) (*ctypes.ResultBroadcastTx) {
+
+	if tendermintHttpClient == nil {
+		initClient()
+	}
+	tx := types.Tx(utils.StructToJson(op))
+	resultBroadcastTxCommit, err := tendermintHttpClient.BroadcastTxSync(tx)
+	if err != nil {
+		logger.Error(err)
+		return nil
+	}
+	return resultBroadcastTxCommit
+}
+
+
 
 func BroadcastTxCommitUseHttp(op *models.TxCommitBody) (*ctypes.ResultBroadcastTxCommit) {
 

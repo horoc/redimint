@@ -1,13 +1,17 @@
 package models
 
 type TxCommitBody struct {
-	Operation string `json:"operation"`
-	Sequence string `json:"sequence"`
+	Data      *TxCommitData `json:"data"`
 	Signature string `json:"signature"`
-	Address string `json:"address"`
+	Address   string `json:"address"`
+}
+
+type TxCommitData struct {
+	Operation string `json:"operation"`
+	Sequence  string `json:"sequence"`
 }
 
 type TxValidatorUpdate struct {
 	PublicKey string `json:"public_key"'`
-	Power string `json:"power"`
+	Power     string `json:"power"`
 }
