@@ -64,8 +64,7 @@ func BroadcastTxCommitUseHttp(op *models.TxCommitBody) (*ctypes.ResultBroadcastT
 	}
 
 	var obj map[string]interface{}
-	utils.JsonToStruct(bytes, obj)
-
+	utils.JsonToStruct(bytes, &obj)
 	var result = &ctypes.ResultBroadcastTxCommit{}
 	utils.JsonToStruct(utils.StructToJson(obj["result"]), result)
 

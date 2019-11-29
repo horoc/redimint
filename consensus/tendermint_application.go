@@ -8,7 +8,6 @@ import (
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/models"
 	c "github.com/chenzhou9513/DecentralizedRedis/models/code"
-
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	"github.com/dgraph-io/badger"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
