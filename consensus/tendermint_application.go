@@ -77,9 +77,9 @@ func (app *LogStoreApplication) isValid(tx []byte) (uint32, string) {
 	// TODO 过滤一些不能用的命令
 
 	commitBody := models.TxCommitBody{}
-	toByte := utils.HexToByte(string(tx))
-	utils.JsonToStruct(toByte, &commitBody)
-	fmt.Println(toByte)
+	//toByte := utils.HexToByte(string(tx))
+	//utils.JsonToStruct(toByte, &commitBody)
+	utils.JsonToStruct(tx, &commitBody)
 
 	if _, ok := app.valAddrToPubKeyMap[commitBody.Address]; !ok {
 		return c.CodeTypeInvalidValidator, c.Info(c.CodeTypeInvalidValidator)

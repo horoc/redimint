@@ -51,22 +51,24 @@ func BroadcastTxCommitUseHttp(op *models.TxCommitBody) (*ctypes.ResultBroadcastT
 
 	json := utils.StructToJson(op)
 	hex := utils.ByteToHex(json)
-	fmt.Println(hex)
 
 	q.Add("tx", "\""+hex+"\"")
 
 	u.RawQuery = q.Encode()
 	req, _ := http.NewRequest("GET", fmt.Sprint(u), nil)
 	res := utils.SendRequest(req)
+
 	bytes, err := ioutil.ReadAll(res.Body)
-	if err!=nil{
+	if err != nil {
 		logger.Error(err)
 	}
-	//解析 ，把result拿出来放进去 "jsonrpc": "2.0",
-	//    "id": "",
-	//    "result":
+
+	var obj map[string]interface{}
+	utils.JsonToStruct(bytes, obj)
+
 	var result = &ctypes.ResultBroadcastTxCommit{}
-	utils.JsonToStruct(bytes, result)
+	utils.JsonToStruct(utils.StructToJson(obj["result"]), result)
+
 	if err != nil {
 		logger.Error(err)
 		return nil

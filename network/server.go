@@ -184,7 +184,7 @@ func (server *Server) testTps(writer http.ResponseWriter, request *http.Request)
 	res := utils.SendRequest(request)
 	fmt.Println(res)
 	t1 = time.Now()
-	fmt.Printf("time 2 %s",fmt.Sprint(t1.Sub(t0)))
+	fmt.Sprintf("time 2 %s",fmt.Sprint(t1.Sub(t0)))
 
 
 	response.TotalTime = fmt.Sprint(t1.Sub(t0))

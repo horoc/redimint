@@ -37,7 +37,7 @@ func (s ServiceImpl) Execute(request *models.ExecuteRequest) *models.ExecuteResp
 	timestamp := time.Now().UnixNano() / 1e6
 
 	//tendermint response
-	commitMsg := consensus.BroadcastTxCommitUseHttp(op)
+	commitMsg := consensus.BroadcastTxCommit(op)
 
 
 	//TODO 错误处理
