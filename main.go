@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/chenzhou9513/DecentralizedRedis/consensus"
 	"github.com/chenzhou9513/DecentralizedRedis/database"
+	"github.com/chenzhou9513/DecentralizedRedis/ipfs"
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/network"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
@@ -18,6 +19,7 @@ import (
 func Init() {
 	utils.InitKey()
 	utils.InitConfig()
+	ipfs.InitIPFS()
 	logger.InitLogger()
 	database.InitRedisClient()
 	consensus.InitLogStoreApplication()

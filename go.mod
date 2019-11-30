@@ -16,6 +16,7 @@ require (
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/pprof v0.0.0-20191105193234-27840fff0d09 // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
+	github.com/ipfs/go-ipfs-api v0.0.2
 	github.com/jstemmer/go-junit-report v0.9.1 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/rogpeppe/go-internal v1.5.0 // indirect

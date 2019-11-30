@@ -6,12 +6,18 @@ type TxCommitBody struct {
 	Address   string `json:"address"`
 }
 
+type ValidatorUpdateBody struct {
+	ValidatorUpdate      *TxCommitData `json:"validator_update"`
+	Signature string `json:"signature"`
+	Address   string `json:"address"`
+}
+
+type ValidatorUpdateData struct {
+	PublicKey   string `json:"public_key"`
+	Power  string `json:"power"`
+}
+
 type TxCommitData struct {
 	Operation string `json:"operation"`
 	Sequence  string `json:"sequence"`
-}
-
-type TxValidatorUpdate struct {
-	PublicKey string `json:"public_key"'`
-	Power     string `json:"power"`
 }

@@ -70,6 +70,26 @@ func (LogStoreApplication) Info(req abcitypes.RequestInfo) abcitypes.ResponseInf
 	return abcitypes.ResponseInfo{}
 }
 
+func (app *LogStoreApplication) isValidValidatorUpdateTx(tx []byte) (uint32, string) {
+
+	validatorUpdateBody := models.ValidatorUpdateBody{}
+	utils.JsonToStruct(tx, &validatorUpdateBody)
+
+	if _, ok := app.valAddrToPubKeyMap[validatorUpdateBody.Address]; !ok {
+		return c.CodeTypeInvalidValidator, c.Info(c.CodeTypeInvalidValidator)
+	}
+
+	pubkey := ed25519.PubKeyEd25519{}
+	copy(pubkey[:], app.valAddrToPubKeyMap[validatorUpdateBody.Address].Data)
+
+	if pubkey.VerifyBytes(utils.StructToJson(validatorUpdateBody.ValidatorUpdate), utils.HexToByte(validatorUpdateBody.Signature)) != true {
+		return c.CodeTypeInvalidSign, c.Info(c.CodeTypeInvalidSign)
+	}
+
+	return c.CodeTypeOK, c.Info(c.CodeTypeOK)
+
+}
+
 func (app *LogStoreApplication) isValid(tx []byte) (uint32, string) {
 	// TODO check query or execution
 	// TODO 语法检验
@@ -79,6 +99,10 @@ func (app *LogStoreApplication) isValid(tx []byte) (uint32, string) {
 	//toByte := utils.HexToByte(string(tx))
 	//utils.JsonToStruct(toByte, &commitBody)
 	utils.JsonToStruct(tx, &commitBody)
+
+	if commitBody.Data == nil{
+		return app.isValidValidatorUpdateTx(tx)
+	}
 
 	if _, ok := app.valAddrToPubKeyMap[commitBody.Address]; !ok {
 		return c.CodeTypeInvalidValidator, c.Info(c.CodeTypeInvalidValidator)

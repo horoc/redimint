@@ -49,8 +49,6 @@ func BroadcastTxSync(op *models.TxCommitBody) (*ctypes.ResultBroadcastTx) {
 	return resultBroadcastTxCommit
 }
 
-
-
 func BroadcastTxCommitUseHttp(op *models.TxCommitBody) (*ctypes.ResultBroadcastTxCommit) {
 
 	str := "http://" + utils.Config.Tendermint.Url + "/broadcast_tx_commit"
@@ -82,7 +80,6 @@ func BroadcastTxCommitUseHttp(op *models.TxCommitBody) (*ctypes.ResultBroadcastT
 	}
 	return result
 }
-
 
 func ABCIDataQuery(path string, data []byte) *ctypes.ResultABCIQuery {
 	if tendermintHttpClient == nil {
@@ -152,7 +149,6 @@ func GetChainState() *ctypes.ResultStatus {
 }
 
 func GetBlockFromHeight(h int) *ctypes.ResultBlock {
-
 	if tendermintHttpClient == nil {
 		initClient()
 	}
@@ -162,29 +158,5 @@ func GetBlockFromHeight(h int) *ctypes.ResultBlock {
 		logger.Error(err)
 		return nil
 	}
-
-	//str := "http://" + utils.Config.Tendermint.Url + "/block"
-	//u, _ := url.Parse(str)
-	//q, _ := url.ParseQuery(u.RawQuery)
-	//q.Add("height", h)
-	//u.RawQuery = q.Encode()
-	//request, e := http.NewRequest("GET", fmt.Sprint(u), nil)
-	//if e != nil {
-	//	fmt.Println(e)
-	//}
-	//response := utils.SendRequest(request)
-	//res := new(ctypes.ResultBlock)
-	//bodyBytes, e := ioutil.ReadAll(response.Body)
-	//if response.Body != nil{
-	//	response.Body.Close()
-	//}
-	//if e != nil {
-	//	fmt.Println(e)
-	//}
-	//e = json.Unmarshal(bodyBytes, res)
-	//if e!=nil{
-	//	fmt.Println(e)
-	//}
-	//fmt.Println(res)
 	return resultBlock
 }

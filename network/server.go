@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/chenzhou9513/DecentralizedRedis/consensus"
 	"github.com/chenzhou9513/DecentralizedRedis/database"
+	"github.com/chenzhou9513/DecentralizedRedis/ipfs"
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/models"
 	"github.com/chenzhou9513/DecentralizedRedis/service"
@@ -51,6 +52,8 @@ func (server *Server) setRoute() {
 	http.HandleFunc("/chain/abci_query", server.getACBIQuery)
 	http.HandleFunc("/chain/tx", server.getTxFromHash)
 	http.HandleFunc("/chain/search_tx", server.getSearchTx)
+
+	http.HandleFunc("/chain/block",server.getBlock)
 	http.HandleFunc("/chain/transaction", server.getTransaction)
 
 	//db execute
@@ -66,6 +69,10 @@ func (server *Server) setRoute() {
 
 	http.HandleFunc("/logs", server.getLogsFromHeight)
 	http.HandleFunc("/test_tps", server.testTps)
+
+	//ipfs
+	http.HandleFunc("/ipfs/test", server.testIpfs)
+
 
 	//http.HandleFunc("/req", server.getReq)
 	//http.HandleFunc("/preprepare", server.getPrePrepare)
@@ -271,6 +278,19 @@ func (server *Server) executeAsync(writer http.ResponseWriter, request *http.Req
 	writer.Write(utils.StructToJson(res))
 }
 
+func (server *Server) getBlock(writer http.ResponseWriter, request *http.Request) {
+	var msg models.BlockHeightRequest
+	err := json.NewDecoder(request.Body).Decode(&msg)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	res := server.service.QueryBlock(msg.Height)
+
+	writer.Header().Set("Content-type", "application/json")
+	writer.Write(utils.StructToJson(res))
+}
+
 func (server *Server) getTransaction(writer http.ResponseWriter, request *http.Request) {
 	var msg models.TxHashRequest
 	err := json.NewDecoder(request.Body).Decode(&msg)
@@ -318,3 +338,12 @@ func (server *Server) dump(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("Content-type", "application/json")
 	writer.Write([]byte(val))
 }
+
+func (server *Server) testIpfs(writer http.ResponseWriter, request *http.Request) {
+	hash := ipfs.UploadRDB()
+	ipfs.GetFile(hash, "./a.rdb")
+	writer.Header().Set("Content-type", "application/json")
+	writer.Write([]byte(hash))
+}
+
+

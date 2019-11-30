@@ -7,6 +7,8 @@ import (
 	"github.com/chenzhou9513/DecentralizedRedis/models/code"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	uuid "github.com/satori/go.uuid"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	"github.com/tendermint/tendermint/types"
 	"strconv"
 	"time"
 )
@@ -14,7 +16,7 @@ import (
 type ServiceImpl struct {
 }
 
-func MakeTxCommitBody(request *models.ExecuteRequest) *models.TxCommitBody {
+func (s ServiceImpl) MakeTxCommitBody(request *models.ExecuteRequest) *models.TxCommitBody {
 	op := &models.TxCommitBody{}
 	op.Data = &models.TxCommitData{}
 
@@ -35,7 +37,7 @@ func MakeTxCommitBody(request *models.ExecuteRequest) *models.TxCommitBody {
 }
 
 func (s ServiceImpl) Execute(request *models.ExecuteRequest) *models.ExecuteResponse {
-	op := MakeTxCommitBody(request)
+	op := s.MakeTxCommitBody(request)
 	//timestamp
 	timestamp := time.Now().UnixNano() / 1e6
 	//tendermint response
@@ -55,7 +57,7 @@ func (s ServiceImpl) Execute(request *models.ExecuteRequest) *models.ExecuteResp
 }
 
 func (s ServiceImpl) ExecuteAsync(request *models.ExecuteRequest) *models.ExecuteAsyncResponse {
-	op := MakeTxCommitBody(request)
+	op := s.MakeTxCommitBody(request)
 	//timestamp
 	timestamp := time.Now().UnixNano() / 1e6
 
@@ -110,4 +112,89 @@ func (s ServiceImpl) QueryTransaction(hash string) *models.Transaction {
 		}
 	}
 	return transaction
+}
+
+func (s ServiceImpl) QueryBlock(height int) *models.Block {
+	originBlock := consensus.GetBlockFromHeight(height)
+	return s.ConvertBlock(originBlock)
+}
+
+func (s ServiceImpl) ConvertBlockID(b *types.BlockID) *models.BlockID {
+	blockID := models.BlockID{}
+	blockID.Hash = utils.ByteToHex(b.Hash)
+	blockID.PartsHeader = models.PartSetHeader{
+		Total: b.PartsHeader.Total,
+		Hash:  utils.ByteToHex(b.PartsHeader.Hash),
+	}
+	return &blockID
+}
+
+func (s ServiceImpl) ConvertBlockHeader(b *types.Header) *models.Header {
+	return &models.Header{
+		Version:            b.Version,
+		ChainID:            b.ChainID,
+		Height:             b.Height,
+		Time:               time.Time{},
+		NumTxs:             b.NumTxs,
+		TotalTxs:           b.TotalTxs,
+		LastBlockID:        *s.ConvertBlockID(&b.LastBlockID),
+		LastCommitHash:     utils.ByteToHex(b.LastCommitHash),
+		DataHash:           utils.ByteToHex(b.DataHash),
+		ValidatorsHash:     utils.ByteToHex(b.ValidatorsHash),
+		NextValidatorsHash: utils.ByteToHex(b.NextValidatorsHash),
+		ConsensusHash:      utils.ByteToHex(b.ConsensusHash),
+		AppHash:            utils.ByteToHex(b.AppHash),
+		LastResultsHash:    utils.ByteToHex(b.LastCommitHash),
+		EvidenceHash:       utils.ByteToHex(b.EvidenceHash),
+		ProposerAddress:    utils.ByteToHex(b.ProposerAddress),
+	}
+}
+
+func (s ServiceImpl) ConvertBlockData(b *types.Data) *models.Data {
+	data := &models.Data{
+		Txs:  make([]string, 0),
+		Hash: utils.ByteToHex(b.Hash()),
+	}
+	for _, v := range b.Txs {
+		data.Txs = append(data.Txs, utils.ByteToHex(v))
+	}
+	return data
+}
+
+func (s ServiceImpl) ConvertCommitSign(b *types.CommitSig) *models.CommitSig {
+
+	return &models.CommitSig{
+		Type:             b.Type,
+		Height:           b.Height,
+		Round:            b.Round,
+		Timestamp:        b.Timestamp,
+		ValidatorAddress: utils.ByteToHex(b.ValidatorAddress),
+		ValidatorIndex:   b.ValidatorIndex,
+		Signature:        utils.ByteToHex(b.Signature),
+	}
+}
+
+func (s ServiceImpl) ConvertBlock(b *ctypes.ResultBlock) *models.Block {
+
+	blockID := s.ConvertBlockID(&(b.BlockMeta.BlockID))
+
+	header := s.ConvertBlockHeader(&(b.Block.Header))
+
+	data := s.ConvertBlockData(&(b.Block.Data))
+
+	lastCommit := make([]*models.CommitSig, 0)
+
+	for _, v := range b.Block.LastCommit.Precommits {
+		lastCommit = append(lastCommit, s.ConvertCommitSign(v))
+	}
+
+	block := &models.Block{
+		BlockID:    *blockID,
+		Header:     *header,
+		Data:       *data,
+		Evidence:   b.Block.Evidence,
+		LastCommit: lastCommit,
+	}
+
+	return block
 }
