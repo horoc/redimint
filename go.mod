@@ -15,6 +15,7 @@ require (
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-redis/redis v6.15.6+incompatible
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
+	github.com/golang/protobuf v1.3.2
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/pprof v0.0.0-20191105193234-27840fff0d09 // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
@@ -47,7 +48,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898 // indirect
 	google.golang.org/appengine v1.6.5 // indirect
 	google.golang.org/genproto v0.0.0-20191115221424-83cc0476cb11 // indirect
-	google.golang.org/grpc v1.25.1 // indirect
+	google.golang.org/grpc v1.25.1
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/go-playground/validator.v9 v9.30.2 // indirect
 	gopkg.in/yaml.v2 v2.2.7

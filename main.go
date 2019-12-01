@@ -40,8 +40,8 @@ func main() {
 	}
 	defer server.Stop()
 
-	httpServer := network.NewServer("0.0.0.0", "30001")
-	httpServer.Start()
+	appServer := network.NewServer()
+	appServer.Start()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)

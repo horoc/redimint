@@ -12,7 +12,8 @@ type Configuration struct {
 	Redis      RedisConfig      `yaml:"redis-config"`
 	Tendermint TendermintConfig `yaml:"tendermint-config"`
 	IPFS       IPFSConfig       `yaml:"ipfs-config"`
-	Server     ServerConfig    `yaml:"server-config"`
+	HttpServer HttpServerConfig `yaml:"http-server-config"`
+	Rpc        RpcConfig        `yaml:"rpc-config"`
 }
 
 type RedisConfig struct {
@@ -30,11 +31,15 @@ type IPFSConfig struct {
 	Url string `yaml:"url"`
 }
 
-type ServerConfig struct {
+type HttpServerConfig struct {
 	RunMode      string        `yaml:"run_mode"`
 	Port         int           `yaml:"port"`
 	ReadTimeout  time.Duration `yaml:"read_timeout"`
 	WriteTimeout time.Duration `yaml:"write_timeout"`
+}
+
+type RpcConfig struct {
+	Port int `yaml:"port"`
 }
 
 var Config Configuration
