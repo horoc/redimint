@@ -5,12 +5,14 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"path/filepath"
+	"time"
 )
 
-type SerivceConfig struct {
+type Configuration struct {
 	Redis      RedisConfig      `yaml:"redis-config"`
 	Tendermint TendermintConfig `yaml:"tendermint-config"`
-	IPFS IPFSConfig `yaml:"ipfs-config"`
+	IPFS       IPFSConfig       `yaml:"ipfs-config"`
+	Server     ServerConfig    `yaml:"server-config"`
 }
 
 type RedisConfig struct {
@@ -24,14 +26,21 @@ type TendermintConfig struct {
 	Url string `yaml:"url"`
 }
 
-type IPFSConfig struct{
+type IPFSConfig struct {
 	Url string `yaml:"url"`
 }
 
-var Config SerivceConfig
+type ServerConfig struct {
+	RunMode      string        `yaml:"run_mode"`
+	Port         int           `yaml:"port"`
+	ReadTimeout  time.Duration `yaml:"read_timeout"`
+	WriteTimeout time.Duration `yaml:"write_timeout"`
+}
+
+var Config Configuration
 
 func InitConfig() {
-	abspath, err := filepath.Abs("./conf/service.yaml")
+	abspath, err := filepath.Abs("./conf/configuration.yaml")
 	if err != nil {
 	}
 	yamlFile, err := ioutil.ReadFile(abspath)

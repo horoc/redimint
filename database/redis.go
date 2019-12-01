@@ -25,12 +25,12 @@ func NewRedisClient() *redis.Client {
 	return client
 }
 
-func DumpRDBFile() string{
+func DumpRDBFile() string {
 	save := Client.Save()
 	return save.Val()
 }
 
-func ExecuteCommand(commond string) string {
+func ExecuteCommand(commond string) (string, error) {
 	split := strings.Split(commond, " ")
 	slice := make([]interface{}, len(split))
 	for i := 0; i < len(split); i++ {
@@ -41,7 +41,7 @@ func ExecuteCommand(commond string) string {
 	s, err := cmd.Result()
 	if err != nil {
 		logger.Error(err)
-		return err.Error()
+		return "",err
 	}
-	return fmt.Sprintf("%v", s)
+	return fmt.Sprintf("%v", s),nil
 }

@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/chenzhou9513/DecentralizedRedis/consensus"
+	"github.com/chenzhou9513/DecentralizedRedis/database"
 	"github.com/chenzhou9513/DecentralizedRedis/models"
 	"github.com/chenzhou9513/DecentralizedRedis/models/code"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
@@ -13,10 +14,16 @@ import (
 	"time"
 )
 
+var AppService Service
+
 type ServiceImpl struct {
 }
 
-func (s ServiceImpl) MakeTxCommitBody(request *models.ExecuteRequest) *models.TxCommitBody {
+func InitService() {
+	AppService = ServiceImpl{}
+}
+
+func (s ServiceImpl) MakeTxCommitBody(request *models.CommandRequest) *models.TxCommitBody {
 	op := &models.TxCommitBody{}
 	op.Data = &models.TxCommitData{}
 
@@ -36,7 +43,7 @@ func (s ServiceImpl) MakeTxCommitBody(request *models.ExecuteRequest) *models.Tx
 	return op
 }
 
-func (s ServiceImpl) Execute(request *models.ExecuteRequest) *models.ExecuteResponse {
+func (s ServiceImpl) Execute(request *models.CommandRequest) *models.ExecuteResponse {
 	op := s.MakeTxCommitBody(request)
 	//timestamp
 	timestamp := time.Now().UnixNano() / 1e6
@@ -56,14 +63,12 @@ func (s ServiceImpl) Execute(request *models.ExecuteRequest) *models.ExecuteResp
 		Height:        commitMsg.Height}
 }
 
-func (s ServiceImpl) ExecuteAsync(request *models.ExecuteRequest) *models.ExecuteAsyncResponse {
+func (s ServiceImpl) ExecuteAsync(request *models.CommandRequest) *models.ExecuteAsyncResponse {
 	op := s.MakeTxCommitBody(request)
 	//timestamp
 	timestamp := time.Now().UnixNano() / 1e6
 
 	sync := consensus.BroadcastTxSync(op)
-
-	fmt.Println(string(utils.StructToJson(sync)))
 
 	return &models.ExecuteAsyncResponse{
 		Code:      code.CodeTypeOK,
@@ -73,6 +78,22 @@ func (s ServiceImpl) ExecuteAsync(request *models.ExecuteRequest) *models.Execut
 		Sequence:  op.Data.Sequence,
 		TimeStamp: strconv.FormatInt(timestamp, 10),
 		Hash:      utils.ByteToHex(sync.Hash),
+	}
+}
+
+func (s ServiceImpl) Query(request *models.CommandRequest) *models.QueryResponse {
+	result, err := database.ExecuteCommand(request.Cmd)
+	if err != nil {
+		return &models.QueryResponse{
+			Code:    code.CodeTypeRedisExecutionError,
+			CodeMsg: code.Info(code.CodeTypeRedisExecutionError) + ": " + err.Error(),
+			Result:  "",
+		}
+	}
+	return &models.QueryResponse{
+		Code:    code.CodeTypeOK,
+		CodeMsg: code.Info(code.CodeTypeOK),
+		Result:  result,
 	}
 }
 
@@ -119,6 +140,15 @@ func (s ServiceImpl) QueryBlock(height int) *models.Block {
 	return s.ConvertBlock(originBlock)
 }
 
+func (s ServiceImpl) GetsChainState() *models.ChainState {
+	originState := consensus.GetChainState()
+	state := &models.ChainState{}
+	utils.JsonToStruct(utils.StructToJson(originState), state)
+	fmt.Println(originState.ValidatorInfo.PubKey)
+	state.ValidatorInfo.PubKey = originState.ValidatorInfo.PubKey.Bytes()
+	return state
+}
+
 func (s ServiceImpl) ConvertBlockID(b *types.BlockID) *models.BlockID {
 	blockID := models.BlockID{}
 	blockID.Hash = utils.ByteToHex(b.Hash)
@@ -156,7 +186,7 @@ func (s ServiceImpl) ConvertBlockData(b *types.Data) *models.Data {
 		Hash: utils.ByteToHex(b.Hash()),
 	}
 	for _, v := range b.Txs {
-		data.Txs = append(data.Txs, utils.ByteToHex(v))
+		data.Txs = append(data.Txs, fmt.Sprintf("%x", v.Hash()))
 	}
 	return data
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/chenzhou9513/DecentralizedRedis/ipfs"
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/network"
+	"github.com/chenzhou9513/DecentralizedRedis/service"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	abciserver "github.com/tendermint/tendermint/abci/server"
 	"github.com/tendermint/tendermint/libs/log"
@@ -19,8 +20,10 @@ import (
 func Init() {
 	utils.InitKey()
 	utils.InitConfig()
+
 	ipfs.InitIPFS()
 	logger.InitLogger()
+	service.InitService()
 	database.InitRedisClient()
 	consensus.InitLogStoreApplication()
 }

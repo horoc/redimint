@@ -9,8 +9,10 @@ import (
 	"github.com/chenzhou9513/DecentralizedRedis/ipfs"
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/models"
+	"github.com/chenzhou9513/DecentralizedRedis/routers"
 	"github.com/chenzhou9513/DecentralizedRedis/service"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
+	"github.com/gin-gonic/gin"
 	"github.com/satori/go.uuid"
 	"io/ioutil"
 	"net/http"
@@ -20,24 +22,37 @@ import (
 	"time"
 )
 
+var AppServer *Server
+
 type Server struct {
-	url     string
-	port    string
-	service service.Service
+	host       string
+	port       string
+	httpServer *http.Server
+	appService service.Service
 }
 
 func NewServer(host string, port string) *Server {
-	service := service.ServiceImpl{}
-	url := host + ":" + port
-	//node := NewNode(nodeID, url);
-	server := &Server{url, port, service}
-	server.setRoute()
+
+	gin.SetMode(utils.Config.Server.RunMode)
+
+	routersInit := routers.InitRouter()
+	endPoint := fmt.Sprintf(":%d", utils.Config.Server.Port)
+
+	httpServer := &http.Server{
+		Addr:           endPoint,
+		Handler:        routersInit,
+	}
+
+	logger.Info("[info] start http server listening ", endPoint)
+	server := &Server{host, port, httpServer, service.AppService}
+	AppServer = server
+	//server.setRoute()
 	return server
 }
 
 func (server *Server) Start() {
-	fmt.Printf("Server will be started at %s...\n", server.url)
-	if err := http.ListenAndServe(server.url, nil); err != nil {
+	fmt.Printf("Server will be started at %s:%s...\n", server.host, server.port)
+	if err := server.httpServer.ListenAndServe(); err != nil {
 		logger.Error(err)
 		return
 	}
@@ -53,7 +68,7 @@ func (server *Server) setRoute() {
 	http.HandleFunc("/chain/tx", server.getTxFromHash)
 	http.HandleFunc("/chain/search_tx", server.getSearchTx)
 
-	http.HandleFunc("/chain/block",server.getBlock)
+	http.HandleFunc("/chain/block", server.getBlock)
 	http.HandleFunc("/chain/transaction", server.getTransaction)
 
 	//db execute
@@ -72,20 +87,7 @@ func (server *Server) setRoute() {
 
 	//ipfs
 	http.HandleFunc("/ipfs/test", server.testIpfs)
-
-
-	//http.HandleFunc("/req", server.getReq)
-	//http.HandleFunc("/preprepare", server.getPrePrepare)
-	//http.HandleFunc("/prepare", server.getPrepare)
-	//http.HandleFunc("/commit", server.getCommit)
-	//http.HandleFunc("/reply", server.getReply)
-	//http.HandleFunc("/restore", server.doRestore)
 }
-
-//
-//func (server *Server) doRestore(writer http.ResponseWriter, request *http.Request) {
-//	//TODO 重新加载rdb和日志文件
-//}
 
 func (server *Server) getChainInfo(writer http.ResponseWriter, request *http.Request) {
 
@@ -220,7 +222,7 @@ func (server *Server) getQuery(writer http.ResponseWriter, request *http.Request
 		logger.Error(err)
 		return
 	}
-	res := database.ExecuteCommand(msg.Operation)
+	res,_ := database.ExecuteCommand(msg.Operation)
 	resBody := &QueryResponse{}
 	resBody.Operation = msg.Operation
 	resBody.Result = res
@@ -259,7 +261,7 @@ func (server *Server) execute(writer http.ResponseWriter, request *http.Request)
 		logger.Error(err)
 		return
 	}
-	res := server.service.Execute(&models.ExecuteRequest{msg.Operation})
+	res := server.appService.Execute(&models.CommandRequest{msg.Operation})
 
 	writer.Header().Set("Content-type", "application/json")
 	writer.Write(utils.StructToJson(res))
@@ -272,7 +274,7 @@ func (server *Server) executeAsync(writer http.ResponseWriter, request *http.Req
 		logger.Error(err)
 		return
 	}
-	res := server.service.ExecuteAsync(&models.ExecuteRequest{msg.Operation})
+	res := server.appService.ExecuteAsync(&models.CommandRequest{msg.Operation})
 
 	writer.Header().Set("Content-type", "application/json")
 	writer.Write(utils.StructToJson(res))
@@ -285,7 +287,7 @@ func (server *Server) getBlock(writer http.ResponseWriter, request *http.Request
 		logger.Error(err)
 		return
 	}
-	res := server.service.QueryBlock(msg.Height)
+	res := server.appService.QueryBlock(msg.Height)
 
 	writer.Header().Set("Content-type", "application/json")
 	writer.Write(utils.StructToJson(res))
@@ -298,12 +300,11 @@ func (server *Server) getTransaction(writer http.ResponseWriter, request *http.R
 		logger.Error(err)
 		return
 	}
-	res := server.service.QueryTransaction(msg.Hash)
+	res := server.appService.QueryTransaction(msg.Hash)
 
 	writer.Header().Set("Content-type", "application/json")
 	writer.Write(utils.StructToJson(res))
 }
-
 
 func (server *Server) executeReq(writer http.ResponseWriter, request *http.Request) {
 	var msg ExecutionRequest
@@ -345,5 +346,3 @@ func (server *Server) testIpfs(writer http.ResponseWriter, request *http.Request
 	writer.Header().Set("Content-type", "application/json")
 	writer.Write([]byte(hash))
 }
-
-

@@ -9,3 +9,9 @@ tendermint-config:
 
 ipfs-config:
   url: 116.62.48.146:5001
+
+server-config:
+  run_mode : release
+  port : 30001
+  read_timeout : 6000
+  write_timeout : 6000

@@ -1,12 +1,17 @@
 package models
 
 import (
+	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/types"
 	"github.com/tendermint/tendermint/version"
 	"time"
 )
 
 //Execution
+type CommandRequest struct {
+	Cmd string `json:"cmd"`
+}
+
 type ExecuteResponse struct {
 	Code          uint32 `json:"code"`
 	CodeMsg       string `json:"code_info"`
@@ -29,8 +34,10 @@ type ExecuteAsyncResponse struct {
 	Hash      string `json:"hash"`
 }
 
-type ExecuteRequest struct {
-	Cmd string `json:"command"`
+type QueryResponse struct{
+	Code      uint32 `json:"code"`
+	CodeMsg   string `json:"code_info"`
+	Result 	  string `json:"result"`
 }
 
 //Transaction
@@ -41,6 +48,12 @@ type Transaction struct {
 	Data          *TxCommitBody `json:"data"`
 	ExecuteResult string        `json:"execute_result"`
 	Proof         *TxProof      `json:"proof,omitempty"`
+}
+
+type TransactionList struct {
+	Height int64 `json:"height"`
+	Total  int64 `json:"total"`
+	Txs    []Transaction `json:"txs"`
 }
 
 type TxProof struct {
@@ -61,7 +74,7 @@ type Block struct {
 	Header     `json:"header"`
 	Data       `json:"data"`
 	Evidence   types.EvidenceData `json:"evidence"`
-	LastCommit []*CommitSig             `json:"last_commit"`
+	LastCommit []*CommitSig       `json:"last_commit"`
 }
 
 type BlockID struct {
@@ -113,10 +126,40 @@ type Data struct {
 
 type CommitSig struct {
 	Type             types.SignedMsgType `json:"type"`
-	Height           int64                `json:"height"`
-	Round            int                  `json:"round"`
-	Timestamp        time.Time            `json:"timestamp"`
-	ValidatorAddress string               `json:"validator_address"`
-	ValidatorIndex   int                  `json:"validator_index"`
-	Signature        string               `json:"signature"`
+	Height           int64               `json:"height"`
+	Round            int                 `json:"round"`
+	Timestamp        time.Time           `json:"timestamp"`
+	ValidatorAddress string              `json:"validator_address"`
+	ValidatorIndex   int                 `json:"validator_index"`
+	Signature        string              `json:"signature"`
+}
+
+type NodeInfo struct {
+	ProtocolVersion p2p.ProtocolVersion `json:"protocol_version"`
+	ID              p2p.ID              `json:"id"`          // authenticated identifier
+	ListenAddr      string              `json:"listen_addr"` // accepting incoming
+	Network         string              `json:"network"`     // network/chain ID
+	Version         string              `json:"version"`     // major.minor.revision
+	Channels        HexBytes            `json:"channels"`    // channels this node knows about¬
+	Moniker         string              `json:"moniker"`     // arbitrary moniker
+}
+
+type SyncInfo struct {
+	LatestBlockHash   HexBytes  `json:"latest_block_hash"`
+	LatestAppHash     HexBytes  `json:"latest_app_hash"`
+	LatestBlockHeight int64     `json:"latest_block_height"`
+	LatestBlockTime   time.Time `json:"latest_block_time"`
+	CatchingUp        bool      `json:"catching_up"`
+}
+
+type ValidatorInfo struct {
+	Address     HexBytes `json:"address"`
+	PubKey      HexBytes `json:"pub_key"`
+	VotingPower int64    `json:"voting_power"`
+}
+
+type ChainState struct {
+	NodeInfo      NodeInfo      `json:"node_info"`
+	SyncInfo      SyncInfo      `json:"sync_info"`
+	ValidatorInfo ValidatorInfo `json:"validator_info"`
 }

@@ -17,6 +17,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 const (
@@ -41,6 +42,8 @@ type LogStoreApplication struct {
 	valAddrToPubKeyMap map[string]abcitypes.PubKey
 
 	logSize atomic.Int64
+
+	mux sync.Mutex
 }
 
 var _ abcitypes.Application = (*LogStoreApplication)(nil)
@@ -100,7 +103,7 @@ func (app *LogStoreApplication) isValid(tx []byte) (uint32, string) {
 	//utils.JsonToStruct(toByte, &commitBody)
 	utils.JsonToStruct(tx, &commitBody)
 
-	if commitBody.Data == nil{
+	if commitBody.Data == nil {
 		return app.isValidValidatorUpdateTx(tx)
 	}
 
@@ -171,8 +174,8 @@ func (app *LogStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcity
 	app.logSize.Add(1)
 	err := app.currentBatch.Set([]byte(strconv.FormatInt(app.logSize.Load(), 10)), []byte(commitBody.Data.Operation))
 	app.currentHeightList = append(app.currentHeightList, commitBody.Data.Operation)
-	//TODO 事务提交
-	res := database.ExecuteCommand(commitBody.Data.Operation)
+	//TODO 事务提交, 重试
+	res, err := database.ExecuteCommand(commitBody.Data.Operation)
 	response.Code = c.CodeTypeOK
 	response.Data = []byte("Result:" + res)
 	if err != nil {
