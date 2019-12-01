@@ -26,6 +26,14 @@ func GetBlockByHeight(c *gin.Context) {
 
 func GetChainState(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
-	res := s.AppService.GetsChainState()
+	res := s.AppService.GetChainState()
+	ginMsg.Response(http.StatusOK, res)
+}
+
+func GetChainInfo(c *gin.Context) {
+	ginMsg := models.GinMsg{C: c}
+	request := &models.ChainInfoRequest{}
+	ginMsg.DecodeRequestBody(request)
+	res := s.AppService.GetChainInfo(request.Min, request.Max)
 	ginMsg.Response(http.StatusOK, res)
 }

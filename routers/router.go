@@ -10,17 +10,8 @@ func InitRouter() *gin.Engine {
 
 	r := gin.Default()
 
-	//r.StaticFS("/export", http.Dir(export.GetExcelFullPath()))
-	//r.StaticFS("/upload/images", http.Dir(upload.GetImageFullPath()))
-	//r.StaticFS("/qrcode", http.Dir(qrcode.GetQrCodeFullPath()))
-	//
-	//r.GET("/auth", api.GetAuth)
-	//r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	//r.POST("/upload", api.UploadImage)
-
 	db := r.Group("/db")
 	{
-		//获取标签列表
 		db.GET("/query", handlers.QueryCommand)
 		db.POST("/execute", handlers.ExecuteCommand)
 		db.POST("/execute_async", handlers.ExecuteCommandAsync)
@@ -42,6 +33,7 @@ func InitRouter() *gin.Engine {
 		chain.GET("/transaction", handlers.GetTransactionByHash)
 		chain.GET("/block", handlers.GetBlockByHeight)
 		chain.GET("/state", handlers.GetChainState)
+		chain.GET("/info", handlers.GetChainInfo)
 	}
 
 	return r

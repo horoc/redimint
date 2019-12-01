@@ -34,10 +34,10 @@ type ExecuteAsyncResponse struct {
 	Hash      string `json:"hash"`
 }
 
-type QueryResponse struct{
-	Code      uint32 `json:"code"`
-	CodeMsg   string `json:"code_info"`
-	Result 	  string `json:"result"`
+type QueryResponse struct {
+	Code    uint32 `json:"code"`
+	CodeMsg string `json:"code_info"`
+	Result  string `json:"result"`
 }
 
 //Transaction
@@ -51,8 +51,8 @@ type Transaction struct {
 }
 
 type TransactionList struct {
-	Height int64 `json:"height"`
-	Total  int64 `json:"total"`
+	Height int64         `json:"height"`
+	Total  int64         `json:"total"`
 	Txs    []Transaction `json:"txs"`
 }
 
@@ -69,6 +69,11 @@ type ProofDetail struct {
 }
 
 //Block
+type BlockMeta struct {
+	BlockID `json:"block_id"`
+	Header  `json:"header"`
+}
+
 type Block struct {
 	BlockID    `json:"block_id"`
 	Header     `json:"header"`
@@ -132,6 +137,12 @@ type CommitSig struct {
 	ValidatorAddress string              `json:"validator_address"`
 	ValidatorIndex   int                 `json:"validator_index"`
 	Signature        string              `json:"signature"`
+}
+
+//chain
+type ChainInfo struct {
+	LastHeight int64        `json:"last_height"`
+	BlockMetas []*BlockMeta `json:"block_metas"`
 }
 
 type NodeInfo struct {

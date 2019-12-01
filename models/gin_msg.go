@@ -18,11 +18,6 @@ type Response struct {
 
 func (g *GinMsg) Response(httpCode int, data interface{}) {
 	g.C.JSON(httpCode, data)
-	//g.C.JSON(httpCode, Response{
-	//	Code: errCode,
-	//	Msg:  code.Info(errCode),
-	//	Data: data,
-	//})
 	return
 }
 

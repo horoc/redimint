@@ -140,7 +140,23 @@ func (s ServiceImpl) QueryBlock(height int) *models.Block {
 	return s.ConvertBlock(originBlock)
 }
 
-func (s ServiceImpl) GetsChainState() *models.ChainState {
+func (s ServiceImpl) GetChainInfo(min int, max int) *models.ChainInfo {
+	info := consensus.GetChainInfo(min, max)
+	res := &models.ChainInfo{
+		LastHeight: info.LastHeight,
+		BlockMetas: make([]*models.BlockMeta, 0),
+	}
+	metas := info.BlockMetas
+	for _, v := range metas {
+		res.BlockMetas = append(res.BlockMetas, &models.BlockMeta{
+			BlockID: *s.ConvertBlockID(&v.BlockID),
+			Header:  *s.ConvertBlockHeader(&v.Header),
+		})
+	}
+	return res
+}
+
+func (s ServiceImpl) GetChainState() *models.ChainState {
 	originState := consensus.GetChainState()
 	state := &models.ChainState{}
 	utils.JsonToStruct(utils.StructToJson(originState), state)

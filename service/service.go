@@ -9,5 +9,6 @@ type Service interface {
 
 	QueryTransaction(hash string) *models.Transaction
 	QueryBlock(height int) *models.Block
-	GetsChainState() *models.ChainState
+	GetChainState() *models.ChainState
+	GetChainInfo(min int, max int) *models.ChainInfo
 }
