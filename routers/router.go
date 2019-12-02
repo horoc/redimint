@@ -15,7 +15,7 @@ func InitRouter() *gin.Engine {
 		db.GET("/query", handlers.QueryCommand)
 		db.POST("/execute", handlers.ExecuteCommand)
 		db.POST("/execute_async", handlers.ExecuteCommandAsync)
-
+		db.GET("/benchmark", handlers.BenchMarkTest)
 		////获取指定文章
 		//apiv1.GET("/articles/:id", v1.GetArticle)
 		////新建文章

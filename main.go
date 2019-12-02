@@ -23,6 +23,7 @@ func Init() {
 
 	ipfs.InitIPFS()
 	logger.InitLogger()
+	consensus.InitClient()
 	service.InitService()
 	database.InitRedisClient()
 	consensus.InitLogStoreApplication()

@@ -2,6 +2,7 @@ package rpc
 
 import (
 	context "context"
+	"fmt"
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/models"
 	"github.com/chenzhou9513/DecentralizedRedis/rpc/proto"
@@ -29,7 +30,7 @@ func NewRpcServer(port string) *RpcServer {
 }
 
 func (s *RpcServer) StartServer() {
-	lis, err := net.Listen("tcp", s.port)
+	lis, err := net.Listen("tcp", "127.0.0.1:"+s.port)
 	if err != nil {
 		logger.Error("failed to listen: %v", err)
 		return
@@ -44,6 +45,7 @@ type RpcDBService struct {
 }
 
 func (r RpcDBService) Query(c context.Context, req *proto.CommandRequest) (*proto.QueryResponse, error) {
+	fmt.Println("get resquest")
 	queryResponse := s.AppService.Query(&models.CommandRequest{Cmd: req.Cmd})
 	return &proto.QueryResponse{
 		Code:    queryResponse.Code,

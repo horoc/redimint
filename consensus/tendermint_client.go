@@ -15,7 +15,7 @@ import (
 
 var tendermintHttpClient *c.HTTP
 
-func initClient() {
+func InitClient() {
 	var host = "tcp://" + utils.Config.Tendermint.Url
 	var wsEndpoint = "./websocket"
 	tendermintHttpClient = c.NewHTTP(host, wsEndpoint)
@@ -23,9 +23,7 @@ func initClient() {
 
 func BroadcastTxCommit(op *models.TxCommitBody) (*ctypes.ResultBroadcastTxCommit) {
 
-	if tendermintHttpClient == nil {
-		initClient()
-	}
+	fmt.Println(tendermintHttpClient)
 	tx := types.Tx(utils.StructToJson(op))
 	resultBroadcastTxCommit, err := tendermintHttpClient.BroadcastTxCommit(tx)
 	if err != nil {
@@ -37,9 +35,6 @@ func BroadcastTxCommit(op *models.TxCommitBody) (*ctypes.ResultBroadcastTxCommit
 
 func BroadcastTxSync(op *models.TxCommitBody) (*ctypes.ResultBroadcastTx) {
 
-	if tendermintHttpClient == nil {
-		initClient()
-	}
 	tx := types.Tx(utils.StructToJson(op))
 	resultBroadcastTxCommit, err := tendermintHttpClient.BroadcastTxSync(tx)
 	if err != nil {
@@ -82,9 +77,6 @@ func BroadcastTxCommitUseHttp(op *models.TxCommitBody) (*ctypes.ResultBroadcastT
 }
 
 func ABCIDataQuery(path string, data []byte) *ctypes.ResultABCIQuery {
-	if tendermintHttpClient == nil {
-		initClient()
-	}
 
 	resultABCIQuery, err := tendermintHttpClient.ABCIQuery(path, data)
 	if err != nil {
@@ -95,9 +87,6 @@ func ABCIDataQuery(path string, data []byte) *ctypes.ResultABCIQuery {
 }
 
 func SearchTx(query string, page int, size int) *ctypes.ResultTxSearch {
-	if tendermintHttpClient == nil {
-		initClient()
-	}
 
 	resultTx, err := tendermintHttpClient.TxSearch(query, true, page, size)
 	if err != nil {
@@ -108,9 +97,6 @@ func SearchTx(query string, page int, size int) *ctypes.ResultTxSearch {
 }
 
 func GetTx(hash []byte) *ctypes.ResultTx {
-	if tendermintHttpClient == nil {
-		initClient()
-	}
 
 	resultTx, err := tendermintHttpClient.Tx(hash, true)
 	if err != nil {
@@ -121,9 +107,7 @@ func GetTx(hash []byte) *ctypes.ResultTx {
 }
 
 func GetChainInfo(min int, max int) *ctypes.ResultBlockchainInfo {
-	if tendermintHttpClient == nil {
-		initClient()
-	}
+
 	minH := int64(min)
 	maxH := int64(max)
 
@@ -137,9 +121,7 @@ func GetChainInfo(min int, max int) *ctypes.ResultBlockchainInfo {
 }
 
 func GetChainState() *ctypes.ResultStatus {
-	if tendermintHttpClient == nil {
-		initClient()
-	}
+
 	resultStatus, err := tendermintHttpClient.Status()
 	if err != nil {
 		logger.Error(err)
@@ -149,9 +131,7 @@ func GetChainState() *ctypes.ResultStatus {
 }
 
 func GetBlockFromHeight(h int) *ctypes.ResultBlock {
-	if tendermintHttpClient == nil {
-		initClient()
-	}
+
 	height := int64(h)
 	resultBlock, err := tendermintHttpClient.Block(&height)
 	if err != nil {

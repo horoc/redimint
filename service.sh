@@ -30,6 +30,7 @@ function stop() {
 function reinstall() {
     rm -rf ./chain
     rm -rf /tmp/badger
+    rm -rf ./tendermint.sock
     ./tendermint init --home=./chain
     cp -f ./conf/tendermint/config.toml ./chain/config/config.toml
 }

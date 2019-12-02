@@ -10,14 +10,15 @@ var logger = logrus.New()
 func Info(args ...interface{}) {
 	logger.Info(args...)
 }
-
 func Debug(args ...interface{}) {
 	logger.Debug(args...)
 }
 func Error(args ...interface{}) {
 	logger.Error(args...)
 }
-
+func Fatal(args ...interface{}) {
+	logger.Fatal(args...)
+}
 func InitLogger() {
 	customFormatter := new(logrus.TextFormatter)
 	customFormatter.TimestampFormat = "2006-01-02 15:04:05"

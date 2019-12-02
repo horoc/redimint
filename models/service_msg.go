@@ -174,3 +174,23 @@ type ChainState struct {
 	SyncInfo      SyncInfo      `json:"sync_info"`
 	ValidatorInfo ValidatorInfo `json:"validator_info"`
 }
+
+//bench mark
+type BenchMarkRequest struct {
+	TxNums       int    `json:"tx_nums"`
+	TxSendPerSec int    `json:"tx_send_per_sec"`
+	Connections  int    `json:"connections"`
+	Mode         string `json:"mode"`
+	Cmd          string `json:"cmd"`
+}
+
+type BenchMarkResponse struct {
+	Latency *BenchMarkDetail
+	Tps     *BenchMarkDetail
+}
+
+type BenchMarkDetail struct {
+	Avg   string
+	Max   string
+	Stdev string
+}
