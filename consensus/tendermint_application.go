@@ -17,7 +17,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 const (
@@ -38,12 +37,11 @@ type LogStoreApplication struct {
 	currentHeight     atomic.Int64
 	currentHeightList []string
 
-	ValUpdates         []abcitypes.ValidatorUpdate
+	valUpdates         []abcitypes.ValidatorUpdate
 	valAddrToPubKeyMap map[string]abcitypes.PubKey
+	valAddrVote        Vote
 
 	logSize atomic.Int64
-
-	mux sync.Mutex
 }
 
 var _ abcitypes.Application = (*LogStoreApplication)(nil)
@@ -62,7 +60,18 @@ func InitLogStoreApplication() {
 	LogStoreApp = &LogStoreApplication{
 		db:                 logDb,
 		valAddrToPubKeyMap: make(map[string]abcitypes.PubKey),
+		valAddrVote:        NewVote(),
 	}
+}
+
+func (LogStoreApplication) IsValidatorUpdateTx(tx []byte) bool {
+	commitBody := models.TxCommitBody{}
+	utils.JsonToStruct(tx, &commitBody)
+
+	if commitBody.Data == nil {
+		return false
+	}
+	return true
 }
 
 func (LogStoreApplication) SetOption(req abcitypes.RequestSetOption) abcitypes.ResponseSetOption {
@@ -73,48 +82,37 @@ func (LogStoreApplication) Info(req abcitypes.RequestInfo) abcitypes.ResponseInf
 	return abcitypes.ResponseInfo{}
 }
 
-func (app *LogStoreApplication) isValidValidatorUpdateTx(tx []byte) (uint32, string) {
-
-	validatorUpdateBody := models.ValidatorUpdateBody{}
-	utils.JsonToStruct(tx, &validatorUpdateBody)
-
-	if _, ok := app.valAddrToPubKeyMap[validatorUpdateBody.Address]; !ok {
-		return c.CodeTypeInvalidValidator, c.Info(c.CodeTypeInvalidValidator)
-	}
-
-	pubkey := ed25519.PubKeyEd25519{}
-	copy(pubkey[:], app.valAddrToPubKeyMap[validatorUpdateBody.Address].Data)
-
-	if pubkey.VerifyBytes(utils.StructToJson(validatorUpdateBody.ValidatorUpdate), utils.HexToByte(validatorUpdateBody.Signature)) != true {
-		return c.CodeTypeInvalidSign, c.Info(c.CodeTypeInvalidSign)
-	}
-
-	return c.CodeTypeOK, c.Info(c.CodeTypeOK)
-
-}
-
 func (app *LogStoreApplication) isValid(tx []byte) (uint32, string) {
 	// TODO check query or execution
 	// TODO 语法检验
 	// TODO 过滤一些不能用的命令
 
-	commitBody := models.TxCommitBody{}
-	//toByte := utils.HexToByte(string(tx))
-	//utils.JsonToStruct(toByte, &commitBody)
-	utils.JsonToStruct(tx, &commitBody)
+	var data []byte
+	var sign string
+	var address string
 
-	if commitBody.Data == nil {
-		return app.isValidValidatorUpdateTx(tx)
+	if app.IsValidatorUpdateTx(tx) {
+		commitBody := models.TxCommitBody{}
+		utils.JsonToStruct(tx, &commitBody)
+		data = utils.StructToJson(commitBody.Data)
+		sign = commitBody.Signature
+		address = commitBody.Address
+	} else {
+		commitBody := models.ValidatorUpdateBody{}
+		utils.JsonToStruct(tx, &commitBody)
+		data = utils.StructToJson(commitBody.ValidatorUpdate)
+		sign = commitBody.Signature
+		address = commitBody.Address
 	}
 
-	if _, ok := app.valAddrToPubKeyMap[commitBody.Address]; !ok {
+	if _, ok := app.valAddrToPubKeyMap[address]; !ok {
 		return c.CodeTypeInvalidValidator, c.Info(c.CodeTypeInvalidValidator)
 	}
 
 	pubkey := ed25519.PubKeyEd25519{}
-	copy(pubkey[:], app.valAddrToPubKeyMap[commitBody.Address].Data)
+	copy(pubkey[:], app.valAddrToPubKeyMap[address].Data)
 
-	if pubkey.VerifyBytes(utils.StructToJson(commitBody.Data), utils.HexToByte(commitBody.Signature)) != true {
+	if pubkey.VerifyBytes(data, utils.HexToByte(sign)) != true {
 		return c.CodeTypeInvalidSign, c.Info(c.CodeTypeInvalidSign)
 	}
 
@@ -131,7 +129,7 @@ func (app *LogStoreApplication) InitChain(req abcitypes.RequestInitChain) abcity
 	for _, v := range req.Validators {
 		r := app.updateValidator(v)
 		if r.IsErr() {
-			//app.logger.Error("Error updating validators", "r", r)
+			logger.Error(r)
 		}
 	}
 	return abcitypes.ResponseInitChain{}
@@ -141,7 +139,9 @@ func (app *LogStoreApplication) BeginBlock(req abcitypes.RequestBeginBlock) abci
 	app.currentHeightList = make([]string, 0)
 	app.currentHeight.CAS(app.currentHeight.Load(), req.Header.Height)
 	app.currentBatch = app.db.NewTransaction(true)
-	app.ValUpdates = make([]abcitypes.ValidatorUpdate, 0)
+
+	//重置
+	app.valUpdates = make([]abcitypes.ValidatorUpdate, 0)
 
 	for _, ev := range req.ByzantineValidators {
 		if ev.Type == tmtypes.ABCIEvidenceTypeDuplicateVote {
@@ -159,7 +159,7 @@ func (app *LogStoreApplication) BeginBlock(req abcitypes.RequestBeginBlock) abci
 }
 
 func (app *LogStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
-	if isValidatorTx(req.Tx) {
+	if app.IsValidatorUpdateTx(req.Tx) {
 		return app.execValidatorTx(req.Tx)
 	}
 
@@ -202,25 +202,15 @@ func (app *LogStoreApplication) Commit() abcitypes.ResponseCommit {
 }
 
 func (app *LogStoreApplication) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
-	return abcitypes.ResponseEndBlock{ValidatorUpdates: app.ValUpdates}
-}
-
-func isValidatorTx(tx []byte) bool {
-	return strings.HasPrefix(string(tx), ValidatorSetChangePrefix)
+	return abcitypes.ResponseEndBlock{ValidatorUpdates: app.valUpdates}
 }
 
 //val:address1!power1  一次只允许更新一个
 func (app *LogStoreApplication) execValidatorTx(tx []byte) abcitypes.ResponseDeliverTx {
-	tx = tx[len(ValidatorSetChangePrefix):]
+	update := models.ValidatorUpdateBody{}
+	utils.JsonToStruct(tx, &update)
 
-	//get the pubkey and power
-	pubKeyAndPower := strings.Split(string(tx), "!")
-	if len(pubKeyAndPower) != 2 {
-		return abcitypes.ResponseDeliverTx{
-			Code: c.CodeTypeEncodingError,
-			Log:  c.Info(c.CodeTypeEncodingError)}
-	}
-	pubkeyS, powerS := pubKeyAndPower[0], pubKeyAndPower[1]
+	pubkeyS, powerS := update.ValidatorUpdate.PublicKey, update.ValidatorUpdate.Power
 
 	// decode the pubkey
 	pubkey, err := base64.StdEncoding.DecodeString(pubkeyS)
@@ -238,8 +228,12 @@ func (app *LogStoreApplication) execValidatorTx(tx []byte) abcitypes.ResponseDel
 			Log:  c.Info(c.CodeTypeEncodingError)}
 	}
 
-	// update
-	return app.updateValidator(abcitypes.Ed25519ValidatorUpdate(pubkey, power))
+	app.valAddrVote.addVote(pubkeyS, update.Address)
+	if app.valAddrVote.getVoteNum(pubkeyS) >= len(app.valAddrToPubKeyMap) {
+		app.updateValidator(abcitypes.Ed25519ValidatorUpdate(pubkey, power))
+	}
+
+	return abcitypes.ResponseDeliverTx{Code: 0}
 }
 
 func (app *LogStoreApplication) GetLogFromHeight(h int) []string {
@@ -297,11 +291,10 @@ func (app *LogStoreApplication) Query(reqQuery abcitypes.RequestQuery) (resQuery
 }
 
 func (app *LogStoreApplication) updateValidator(v abcitypes.ValidatorUpdate) abcitypes.ResponseDeliverTx {
-	key := []byte("val:" + string(v.PubKey.Data))
 
 	pubkey := ed25519.PubKeyEd25519{}
 	copy(pubkey[:], v.PubKey.Data)
-	val := app.getBadgerVal(key)
+	val := app.getBadgerVal([]byte("val:" + string(v.PubKey.Data)))
 
 	if v.Power == 0 {
 		// remove validator
@@ -311,7 +304,7 @@ func (app *LogStoreApplication) updateValidator(v abcitypes.ValidatorUpdate) abc
 				Code: c.CodeTypeEncodingError,
 				Log:  c.InfoWithDetail(c.CodeTypeEncodingError, pubStr)}
 		}
-		app.deleteBadgerKey(key)
+		app.deleteBadgerKey([]byte("val:" + string(v.PubKey.Data)))
 		delete(app.valAddrToPubKeyMap, pubkey.Address().String())
 	} else {
 		// add or update validator
@@ -321,12 +314,12 @@ func (app *LogStoreApplication) updateValidator(v abcitypes.ValidatorUpdate) abc
 				Code: c.CodeTypeEncodingError,
 				Log:  c.InfoWithDetail(c.CodeTypeEncodingError, err.Error())}
 		}
-		app.updateBadgerVal(key, value.Bytes())
+		app.updateBadgerVal([]byte("val:"+string(v.PubKey.Data)), value.Bytes())
 		app.valAddrToPubKeyMap[pubkey.Address().String()] = v.PubKey
 	}
 
 	// we only update the changes array if we successfully updated the tree
-	app.ValUpdates = append(app.ValUpdates, v)
+	app.valUpdates = append(app.valUpdates, v)
 
 	return abcitypes.ResponseDeliverTx{Code: 0}
 }

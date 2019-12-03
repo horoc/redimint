@@ -5,12 +5,14 @@ import (
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	"github.com/go-redis/redis"
+	"os/exec"
 	"strings"
 )
 
 var Client *redis.Client
 
-func InitRedisClient() {
+func InitRedis() {
+	StartRedisServer()
 	Client = NewRedisClient()
 }
 
@@ -23,6 +25,21 @@ func NewRedisClient() *redis.Client {
 	pong, err := client.Ping().Result()
 	fmt.Println(pong, err)
 	return client
+}
+
+func StopRedis() {
+	status := Client.Shutdown()
+	if status.Err() != nil {
+		logger.Error(status.Err())
+	}
+}
+
+func StartRedisServer() {
+	cmd := exec.Command(utils.Config.Redis.RedisBin, utils.Config.Redis.ConfPath)
+	err := cmd.Run()
+	if err != nil {
+		logger.Error(err)
+	}
 }
 
 func DumpRDBFile() string {
@@ -41,7 +58,7 @@ func ExecuteCommand(commond string) (string, error) {
 	s, err := cmd.Result()
 	if err != nil {
 		logger.Error(err)
-		return "",err
+		return "", err
 	}
-	return fmt.Sprintf("%v", s),nil
+	return fmt.Sprintf("%v", s), nil
 }

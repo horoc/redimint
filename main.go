@@ -25,7 +25,7 @@ func Init() {
 	logger.InitLogger()
 	consensus.InitClient()
 	service.InitService()
-	database.InitRedisClient()
+	database.InitRedis()
 	consensus.InitLogStoreApplication()
 }
 

@@ -97,6 +97,13 @@ func (s ServiceImpl) Query(request *models.CommandRequest) *models.QueryResponse
 	}
 }
 
+func (s ServiceImpl) RestoreLocalDatabase() error {
+	database.StopRedis()
+	database.StartRedisServer()
+
+	return nil
+}
+
 func (s ServiceImpl) QueryTransaction(hash string) *models.Transaction {
 	byteHash := utils.HexToByte(hash)
 	tx := consensus.GetTx(byteHash)

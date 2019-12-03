@@ -23,7 +23,6 @@ func (g *GinMsg) Response(httpCode int, data interface{}) {
 	g.C.JSON(httpCode, data)
 	return
 }
-
 func (g *GinMsg) DecodeRequestBody(data interface{}) {
 	body, _ := ioutil.ReadAll(g.C.Request.Body)
 	utils.JsonToStruct(body, data)

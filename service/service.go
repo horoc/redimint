@@ -3,6 +3,7 @@ package service
 import "github.com/chenzhou9513/DecentralizedRedis/models"
 
 type Service interface {
+	RestoreLocalDatabase() error
 	Query(request *models.CommandRequest) *models.QueryResponse
 	Execute(request *models.CommandRequest) *models.ExecuteResponse
 	ExecuteAsync(request *models.CommandRequest) *models.ExecuteAsyncResponse

@@ -56,13 +56,19 @@ case "$1" in
     start
     ;;
   stop)
+    stopRedis
+    rm -rf dump.rdb
     stop
     ;;
   reinstall)
+    stopRedis
+    rm -rf dump.rdb
     stop
     reinstall
     ;;
   restart)
+    stopRedis
+    rm -rf dump.rdb
     stop
     start
     ;;

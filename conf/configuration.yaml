@@ -3,6 +3,8 @@ redis-config:
   db: 0
   password: Chenzhou@308
   rdb_path: ./dump.rdb
+  redis_bin: redis-server
+  conf_path: ./conf/redis/redis.conf
 
 tendermint-config:
   url: 127.0.0.1:26657

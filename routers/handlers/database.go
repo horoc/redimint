@@ -34,6 +34,15 @@ func QueryCommand(c *gin.Context) {
 	ginMsg.Response(http.StatusOK, res)
 }
 
+func RestoreLocalDatabase(c *gin.Context) {
+	ginMsg := models.GinMsg{C: c}
+	err := s.AppService.RestoreLocalDatabase()
+	if err != nil {
+		logger.Error(err)
+	}
+	ginMsg.Response(http.StatusOK, nil)
+}
+
 func BenchMarkTest(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
 	request := &models.BenchMarkRequest{}

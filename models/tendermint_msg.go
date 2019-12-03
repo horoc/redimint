@@ -7,7 +7,7 @@ type TxCommitBody struct {
 }
 
 type ValidatorUpdateBody struct {
-	ValidatorUpdate      *TxCommitData `json:"validator_update"`
+	ValidatorUpdate      *ValidatorUpdateData `json:"validator_update"`
 	Signature string `json:"signature"`
 	Address   string `json:"address"`
 }
