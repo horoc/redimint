@@ -23,7 +23,6 @@ func InitClient() {
 
 func BroadcastTxCommit(op *models.TxCommitBody) (*ctypes.ResultBroadcastTxCommit) {
 
-	fmt.Println(tendermintHttpClient)
 	tx := types.Tx(utils.StructToJson(op))
 	resultBroadcastTxCommit, err := tendermintHttpClient.BroadcastTxCommit(tx)
 	if err != nil {

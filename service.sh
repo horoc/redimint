@@ -52,6 +52,16 @@ function testTPS(){
 }
 
 case "$1" in
+  newDockernode)
+    rm -rf ./chain
+    mkdir ./chain
+    cp -fr ./conf/dockernode/$2/* ./chain
+    ;;
+  newDocker2node)
+    rm -rf ./chain
+    mkdir ./chain
+    cp -fr ./conf/docker2node/$2/* ./chain
+    ;;
   start)
     start
     ;;
@@ -88,6 +98,40 @@ case "$1" in
   restartRedis)
     stopRedis
     startRedis
+    ;;
+  start2Docker)
+    docker kill $(docker ps -q)
+    docker rm $(docker ps -a -q)
+
+    docker run -tid --name node0 --privileged=true -p 30002:30001 base_test_env /sbin/init
+    docker run -tid --name node1 --privileged=true  base_test_env /sbin/init
+
+    docker cp -a /Users/chenzhou/go/src/github.com/chenzhou9513/DecentralizedRedis node0:/home/DecentralizedRedis
+    docker cp /Users/chenzhou/tendermint/linux/tendermint node0:/home/DecentralizedRedis/tendermint
+
+    docker cp -a /Users/chenzhou/go/src/github.com/chenzhou9513/DecentralizedRedis node1:/home/DecentralizedRedis
+    docker cp /Users/chenzhou/tendermint/linux/tendermint node1:/home/DecentralizedRedis/tendermint
+    ;;
+  startAllDocker)
+    docker kill $(docker ps -q)
+    docker rm $(docker ps -a -q)
+
+    docker run -tid --name node0 --privileged=true -p 30002:30001 base_test_env /sbin/init
+    docker run -tid --name node1 --privileged=true  base_test_env /sbin/init
+    docker run -tid --name node2 --privileged=true  base_test_env /sbin/init
+    docker run -tid --name node3 --privileged=true  base_test_env /sbin/init
+
+    docker cp -a /Users/chenzhou/go/src/github.com/chenzhou9513/DecentralizedRedis node0:/home/DecentralizedRedis
+    docker cp /Users/chenzhou/tendermint/linux/tendermint node0:/home/DecentralizedRedis/tendermint
+
+    docker cp -a /Users/chenzhou/go/src/github.com/chenzhou9513/DecentralizedRedis node1:/home/DecentralizedRedis
+    docker cp /Users/chenzhou/tendermint/linux/tendermint node1:/home/DecentralizedRedis/tendermint
+
+    docker cp -a /Users/chenzhou/go/src/github.com/chenzhou9513/DecentralizedRedis node2:/home/DecentralizedRedis
+    docker cp /Users/chenzhou/tendermint/linux/tendermint node2:/home/DecentralizedRedis/tendermint
+
+    docker cp -a /Users/chenzhou/go/src/github.com/chenzhou9513/DecentralizedRedis node3:/home/DecentralizedRedis
+    docker cp /Users/chenzhou/tendermint/linux/tendermint node3:/home/DecentralizedRedis/tendermint
     ;;
 esac
 exit $RETVAL

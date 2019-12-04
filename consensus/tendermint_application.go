@@ -68,7 +68,7 @@ func (LogStoreApplication) IsValidatorUpdateTx(tx []byte) bool {
 	commitBody := models.TxCommitBody{}
 	utils.JsonToStruct(tx, &commitBody)
 
-	if commitBody.Data == nil {
+	if commitBody.Data != nil {
 		return false
 	}
 	return true
@@ -91,7 +91,7 @@ func (app *LogStoreApplication) isValid(tx []byte) (uint32, string) {
 	var sign string
 	var address string
 
-	if app.IsValidatorUpdateTx(tx) {
+	if !app.IsValidatorUpdateTx(tx) {
 		commitBody := models.TxCommitBody{}
 		utils.JsonToStruct(tx, &commitBody)
 		data = utils.StructToJson(commitBody.Data)

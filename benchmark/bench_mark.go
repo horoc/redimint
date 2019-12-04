@@ -56,12 +56,12 @@ func NewBenchMark(b *models.BenchMarkRequest) (*BenchMark, error) {
 
 func (b *BenchMark) StartTest() *models.BenchMarkResponse {
 	b.wg.Add(b.txNums)
-	//d := time.Duration(60.0/b.txPerSecond) * time.Second
+	d := time.Duration(60.0/b.txPerSecond) * time.Second
 	b.testBegin = time.Now()
 	for i := 0; i < b.txNums; i++ {
 		fmt.Printf("test %d transaction\n", i)
 		go b.SendTestRequest(&models.CommandRequest{Cmd: b.cmd}, b.mode)
-		//time.Sleep(d)
+		time.Sleep(d)
 	}
 	b.wg.Wait()
 	b.testEnd = time.Now()
