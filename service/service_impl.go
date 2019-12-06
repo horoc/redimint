@@ -2,8 +2,9 @@ package service
 
 import (
 	"fmt"
-	"github.com/chenzhou9513/DecentralizedRedis/consensus"
+	"github.com/chenzhou9513/DecentralizedRedis/core"
 	"github.com/chenzhou9513/DecentralizedRedis/database"
+	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/models"
 	"github.com/chenzhou9513/DecentralizedRedis/models/code"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
@@ -18,6 +19,8 @@ var AppService Service
 
 type ServiceImpl struct {
 }
+
+const PRIVATE_SEP string = "_"
 
 func InitService() {
 	AppService = ServiceImpl{}
@@ -48,7 +51,7 @@ func (s ServiceImpl) Execute(request *models.CommandRequest) *models.ExecuteResp
 	//timestamp
 	timestamp := time.Now().UnixNano() / 1e6
 	//tendermint response
-	commitMsg := consensus.BroadcastTxCommit(op)
+	commitMsg := core.BroadcastTxCommit(op)
 
 	//TODO 错误处理
 
@@ -68,7 +71,7 @@ func (s ServiceImpl) ExecuteAsync(request *models.CommandRequest) *models.Execut
 	//timestamp
 	timestamp := time.Now().UnixNano() / 1e6
 
-	sync := consensus.BroadcastTxSync(op)
+	sync := core.BroadcastTxSync(op)
 
 	return &models.ExecuteAsyncResponse{
 		Code:      code.CodeTypeOK,
@@ -81,7 +84,66 @@ func (s ServiceImpl) ExecuteAsync(request *models.CommandRequest) *models.Execut
 	}
 }
 
+func (s ServiceImpl) ExecuteWithPrivateKey(request *models.CommandRequest) *models.ExecuteResponse {
+
+	key, err := database.GetKey(request.Cmd)
+	if err != nil {
+		logger.Error(err)
+	}
+	key = utils.ValidatorKey.Address.String() + PRIVATE_SEP + key
+	cmd, err := database.ReplaceKey(request.Cmd, key)
+	if err != nil {
+		logger.Error(err)
+	}
+	request.Cmd = cmd
+
+	op := s.MakeTxCommitBody(request)
+
+	//timestamp
+	timestamp := time.Now().UnixNano() / 1e6
+
+	sync := core.BroadcastTxSync(op)
+
+	return &models.ExecuteResponse{
+		Code:      code.CodeTypeOK,
+		CodeMsg:   code.Info(code.CodeTypeOK),
+		Cmd:       op.Data.Operation,
+		ExecuteResult: string(sync.Data),
+		Signature: op.Signature,
+		Sequence:  op.Data.Sequence,
+		TimeStamp: strconv.FormatInt(timestamp, 10),
+		Hash:      utils.ByteToHex(sync.Hash),
+	}
+}
+
 func (s ServiceImpl) Query(request *models.CommandRequest) *models.QueryResponse {
+	result, err := database.ExecuteCommand(request.Cmd)
+	if err != nil {
+		return &models.QueryResponse{
+			Code:    code.CodeTypeRedisExecutionError,
+			CodeMsg: code.Info(code.CodeTypeRedisExecutionError) + ": " + err.Error(),
+			Result:  "",
+		}
+	}
+	return &models.QueryResponse{
+		Code:    code.CodeTypeOK,
+		CodeMsg: code.Info(code.CodeTypeOK),
+		Result:  result,
+	}
+}
+
+func (s ServiceImpl) QueryPrivateKey(request *models.CommandRequest, address string) *models.QueryResponse {
+
+	key, err := database.GetKey(request.Cmd)
+	if err != nil {
+		logger.Error(err)
+	}
+	key = utils.ValidatorKey.Address.String() + PRIVATE_SEP + key
+	cmd, err := database.ReplaceKey(request.Cmd, key)
+	if err != nil {
+		logger.Error(err)
+	}
+	request.Cmd = cmd
 	result, err := database.ExecuteCommand(request.Cmd)
 	if err != nil {
 		return &models.QueryResponse{
@@ -106,8 +168,7 @@ func (s ServiceImpl) RestoreLocalDatabase() error {
 
 func (s ServiceImpl) QueryTransaction(hash string) *models.Transaction {
 	byteHash := utils.HexToByte(hash)
-	tx := consensus.GetTx(byteHash)
-
+	tx := core.GetTx(byteHash)
 	data := &models.TxCommitBody{}
 	utils.JsonToStruct(tx.Tx, data)
 
@@ -143,12 +204,12 @@ func (s ServiceImpl) QueryTransaction(hash string) *models.Transaction {
 }
 
 func (s ServiceImpl) QueryBlock(height int) *models.Block {
-	originBlock := consensus.GetBlockFromHeight(height)
+	originBlock := core.GetBlockFromHeight(height)
 	return s.ConvertBlock(originBlock)
 }
 
 func (s ServiceImpl) GetChainInfo(min int, max int) *models.ChainInfo {
-	info := consensus.GetChainInfo(min, max)
+	info := core.GetChainInfo(min, max)
 	res := &models.ChainInfo{
 		LastHeight: info.LastHeight,
 		BlockMetas: make([]*models.BlockMeta, 0),
@@ -164,7 +225,7 @@ func (s ServiceImpl) GetChainInfo(min int, max int) *models.ChainInfo {
 }
 
 func (s ServiceImpl) GetChainState() *models.ChainState {
-	originState := consensus.GetChainState()
+	originState := core.GetChainState()
 	state := &models.ChainState{}
 	utils.JsonToStruct(utils.StructToJson(originState), state)
 	fmt.Println(originState.ValidatorInfo.PubKey)

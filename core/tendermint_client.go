@@ -1,4 +1,4 @@
-package consensus
+package core
 
 import (
 	"fmt"
@@ -14,6 +14,7 @@ import (
 )
 
 var tendermintHttpClient *c.HTTP
+
 
 func InitClient() {
 	var host = "tcp://" + utils.Config.Tendermint.Url

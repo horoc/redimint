@@ -1,5 +1,10 @@
 package models
 
+type ExecuteRequest struct {
+	Cmd string `json:"cmd"`
+	Mode string `json:"mode"`
+}
+
 type TxHashRequest struct {
 	Hash string `json:"hash"`
 }

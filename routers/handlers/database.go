@@ -6,24 +6,26 @@ import (
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/models"
 	s "github.com/chenzhou9513/DecentralizedRedis/service"
+	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
 )
 
 func ExecuteCommand(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
-	request := &models.CommandRequest{}
+	request := &models.ExecuteRequest{}
 	ginMsg.DecodeRequestBody(request)
-	res := s.AppService.Execute(&models.CommandRequest{request.Cmd})
-	ginMsg.Response(http.StatusOK, res)
-}
-
-func ExecuteCommandAsync(c *gin.Context) {
-	ginMsg := models.GinMsg{C: c}
-	request := &models.CommandRequest{}
-	ginMsg.DecodeRequestBody(request)
-	res := s.AppService.ExecuteAsync(&models.CommandRequest{request.Cmd})
-	ginMsg.Response(http.StatusOK, res)
+	if strings.EqualFold(request.Mode, "async") {
+		res := s.AppService.ExecuteAsync(&models.CommandRequest{request.Cmd})
+		ginMsg.Response(http.StatusOK, res)
+	} else if strings.EqualFold(request.Mode, "commit") {
+		res := s.AppService.Execute(&models.CommandRequest{request.Cmd})
+		ginMsg.Response(http.StatusOK, res)
+	} else if strings.EqualFold(request.Mode, "private") {
+		res := s.AppService.ExecuteWithPrivateKey(&models.CommandRequest{request.Cmd})
+		ginMsg.Response(http.StatusOK, res)
+	}
 }
 
 func QueryCommand(c *gin.Context) {
@@ -31,6 +33,14 @@ func QueryCommand(c *gin.Context) {
 	request := &models.CommandRequest{}
 	ginMsg.DecodeRequestBody(request)
 	res := s.AppService.Query(&models.CommandRequest{request.Cmd})
+	ginMsg.Response(http.StatusOK, res)
+}
+
+func QueryPrivateCommand(c *gin.Context) {
+	ginMsg := models.GinMsg{C: c}
+	request := &models.CommandRequest{}
+	ginMsg.DecodeRequestBody(request)
+	res := s.AppService.QueryPrivateKey(&models.CommandRequest{request.Cmd}, utils.ValidatorKey.Address.String())
 	ginMsg.Response(http.StatusOK, res)
 }
 
