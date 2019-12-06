@@ -1,4 +1,4 @@
-package consensus
+package core
 
 import (
 	"bytes"
@@ -42,12 +42,15 @@ type LogStoreApplication struct {
 	valAddrVote        Vote
 
 	logSize atomic.Int64
+
+	initFlag bool
 }
 
 var _ abcitypes.Application = (*LogStoreApplication)(nil)
 var LogStoreApp *LogStoreApplication
 
 const SEP string = "||"
+const PRIVATE_SEP string = "_"
 const SocketAddr string = "unix://tendermint.sock"
 const BadgerPath string = "/tmp/badger"
 
@@ -61,6 +64,7 @@ func InitLogStoreApplication() {
 		db:                 logDb,
 		valAddrToPubKeyMap: make(map[string]abcitypes.PubKey),
 		valAddrVote:        NewVote(),
+		initFlag:           true,
 	}
 }
 
@@ -120,8 +124,32 @@ func (app *LogStoreApplication) isValid(tx []byte) (uint32, string) {
 }
 
 func (app *LogStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
+	app.initFlag = false
 	code, info := app.isValid(req.Tx)
+	commitBody := models.TxCommitBody{}
+	fmt.Println(commitBody)
+	utils.JsonToStruct(req.Tx, &commitBody)
+	if app.IsPrivateCommand(commitBody) && strings.EqualFold(commitBody.Address, utils.ValidatorKey.Address.String()) {
+		res, err := database.ExecuteCommand(commitBody.Data.Operation)
+		if err != nil {
+			logger.Error(err)
+			panic(err)
+		}
+		return abcitypes.ResponseCheckTx{Code: code, GasWanted: 1, Info: info, Data: []byte("Result:" + res)}
+	}
 	return abcitypes.ResponseCheckTx{Code: code, GasWanted: 1, Info: info}
+}
+
+func (app *LogStoreApplication) IsPrivateCommand(commitBody models.TxCommitBody) bool {
+	key, err := database.GetKey(commitBody.Data.Operation)
+	if err != nil {
+		logger.Error(err)
+	}
+	split := strings.Split(key, PRIVATE_SEP)
+	if _, ok := app.valAddrToPubKeyMap[split[0]]; ok && strings.EqualFold(split[0], commitBody.Address) {
+		return true
+	}
+	return false
 }
 
 func (app *LogStoreApplication) InitChain(req abcitypes.RequestInitChain) abcitypes.ResponseInitChain {
@@ -170,6 +198,18 @@ func (app *LogStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcity
 	}
 	commitBody := models.TxCommitBody{}
 	utils.JsonToStruct(req.Tx, &commitBody)
+	fmt.Println("Deliver")
+	fmt.Println(commitBody.Data.Operation)
+	if app.IsPrivateCommand(commitBody) {
+		if app.initFlag || !strings.EqualFold(commitBody.Address, utils.ValidatorKey.Address.String()) {
+			_, err := database.ExecuteCommand(commitBody.Data.Operation)
+			if err != nil {
+				logger.Error(err)
+				panic(err)
+			}
+		}
+		return abcitypes.ResponseDeliverTx{Code: c.CodeTypeOK, Info: msg}
+	}
 
 	app.logSize.Add(1)
 	err := app.currentBatch.Set([]byte(strconv.FormatInt(app.logSize.Load(), 10)), []byte(commitBody.Data.Operation))

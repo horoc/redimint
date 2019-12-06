@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/chenzhou9513/DecentralizedRedis/consensus"
+	"github.com/chenzhou9513/DecentralizedRedis/core"
 	"github.com/chenzhou9513/DecentralizedRedis/database"
 	"github.com/chenzhou9513/DecentralizedRedis/ipfs"
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
@@ -23,17 +23,17 @@ func Init() {
 
 	ipfs.InitIPFS()
 	logger.InitLogger()
-	consensus.InitClient()
+	core.InitClient()
 	service.InitService()
 	database.InitRedis()
-	consensus.InitLogStoreApplication()
+	core.InitLogStoreApplication()
 }
 
 func main() {
 
 	Init()
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-	server := abciserver.NewSocketServer(consensus.SocketAddr, consensus.LogStoreApp)
+	server := abciserver.NewSocketServer(core.SocketAddr, core.LogStoreApp)
 	server.SetLogger(logger)
 	if err := server.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, "error starting socket server: %v", err)

@@ -1,4 +1,4 @@
-package consensus
+package core
 
 type Vote map[string]VoteCount
 

@@ -13,8 +13,8 @@ func InitRouter() *gin.Engine {
 	db := r.Group("/db")
 	{
 		db.GET("/query", handlers.QueryCommand)
+		db.GET("/query_private", handlers.QueryPrivateCommand)
 		db.POST("/execute", handlers.ExecuteCommand)
-		db.POST("/execute_async", handlers.ExecuteCommandAsync)
 		db.GET("/benchmark", handlers.BenchMarkTest)
 		db.POST("/restore", handlers.RestoreLocalDatabase)
 		////获取指定文章
