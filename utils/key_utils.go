@@ -35,9 +35,7 @@ func InitValidatorKey(){
 	ValidatorKey = &fpv.Key
 }
 
-
 func GetNodeID() string{
-
 	return string(p2p.PubKeyToID(NodeKey.PubKey()))
 }
 
@@ -75,10 +73,6 @@ func ValidatorStringSign(msg []byte) string {
 		return ""
 	}
 	return SignToHex(bytes)
-}
-
-func CheckValidatorSign(msg []byte, sign []byte, address []byte) bool{
-	return false
 }
 
 

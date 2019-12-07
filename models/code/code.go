@@ -1,11 +1,16 @@
 package code
 
 const (
-	CodeTypeOK                = 0
-	CodeTypeInvalidSign       = 1
-	CodeTypeInvalidValidator  = 2
-	CodeTypeEncodingError     = 3
+	CodeTypeOK                  = 0
+	CodeTypeInvalidSign         = 1
+	CodeTypeInvalidValidator    = 2
+	CodeTypeEncodingError       = 3
 	CodeTypeRedisExecutionError = 4
+	CodeTypeTxExeCommitError    = 5
+	CodeTypeTxExeSyncError      = 6
+	CodeTypeGetChainInfoError   = 7
+	CodeTypeGetChainStateError  = 8
+	CodeTypeInvalidExecuteMode  = 9
 )
 
 func InfoWithDetail(p int, msg string) string {

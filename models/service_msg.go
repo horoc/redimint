@@ -141,6 +141,8 @@ type CommitSig struct {
 
 //chain
 type ChainInfo struct {
+	Code       uint32       `json:"code"`
+	CodeMsg    string       `json:"code_info"`
 	LastHeight int64        `json:"last_height"`
 	BlockMetas []*BlockMeta `json:"block_metas"`
 }
@@ -170,6 +172,8 @@ type ValidatorInfo struct {
 }
 
 type ChainState struct {
+	Code          uint32        `json:"code"`
+	CodeMsg       string        `json:"code_info"`
 	NodeInfo      NodeInfo      `json:"node_info"`
 	SyncInfo      SyncInfo      `json:"sync_info"`
 	ValidatorInfo ValidatorInfo `json:"validator_info"`
