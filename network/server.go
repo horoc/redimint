@@ -17,7 +17,7 @@ var AppServer *Server
 type Server struct {
 	httpPort   string
 	rpcPort    string
-	rpcServer  *rpc.RpcServer
+	rpcServer  *rpc.Server
 	httpServer *http.Server
 }
 

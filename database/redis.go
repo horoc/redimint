@@ -81,22 +81,26 @@ func ExecuteCommand(command string) (string, error) {
 }
 
 func IsValidCmd(command string) bool {
-
+	split := strings.Split(command, " ")
+	if len(split) < 2 || !readOnlyCommand.Contains(split[0]) && !writeCommand.Contains(split[0]) {
+		return false
+	}
 	return true
 }
 
 func IsQueryCmd(command string) bool {
-	return false
+	split := strings.Split(command, " ")
+	if len(split) < 2 || !readOnlyCommand.Contains(split[0]) {
+		return false
+	}
+	return true
 }
 
 func GetKey(command string) (string, error) {
-	if !IsValidCmd(command) || IsQueryCmd(command) {
-		return "", errors.New("Not a update command : " + command)
+	if !IsValidCmd(command) {
+		return "", errors.New("Not a valid command : " + command)
 	}
 	split := strings.Split(command, " ")
-	if len(split) < 2 {
-		return "", errors.New("Invalid command : " + command)
-	}
 	return split[1], nil
 }
 

@@ -12,16 +12,16 @@ import (
 	"net"
 )
 
-type RpcServer struct {
+type Server struct {
 	port   string
 	server *grpc.Server
-	app    *RpcDBService
+	app    *DBService
 }
 
-func NewRpcServer(port string) *RpcServer {
-	s := &RpcServer{
+func NewRpcServer(port string) *Server {
+	s := &Server{
 		server: grpc.NewServer(),
-		app:    &RpcDBService{},
+		app:    &DBService{},
 		port:   port,
 	}
 	proto.RegisterDecentralizedRedisServer(s.server, s.app)
@@ -29,7 +29,7 @@ func NewRpcServer(port string) *RpcServer {
 	return s
 }
 
-func (s *RpcServer) StartServer() {
+func (s *Server) StartServer() {
 	lis, err := net.Listen("tcp", "127.0.0.1:"+s.port)
 	if err != nil {
 		logger.Error("failed to listen: %v", err)
@@ -41,10 +41,10 @@ func (s *RpcServer) StartServer() {
 	}
 }
 
-type RpcDBService struct {
+type DBService struct {
 }
 
-func (r RpcDBService) Query(c context.Context, req *proto.CommandRequest) (*proto.QueryResponse, error) {
+func (r DBService) Query(c context.Context, req *proto.CommandRequest) (*proto.QueryResponse, error) {
 	fmt.Println("get resquest")
 	queryResponse := s.AppService.Query(&models.CommandRequest{Cmd: req.Cmd})
 	return &proto.QueryResponse{

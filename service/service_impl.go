@@ -17,16 +17,16 @@ import (
 
 var AppService Service
 
-type ServiceImpl struct {
+type ApplicationService struct {
 }
 
-const PRIVATE_SEP string = "_"
+const PrivateSep string = "_"
 
 func InitService() {
-	AppService = ServiceImpl{}
+	AppService = ApplicationService{}
 }
 
-func (s ServiceImpl) MakeTxCommitBody(request *models.CommandRequest) *models.TxCommitBody {
+func (s ApplicationService) MakeTxCommitBody(request *models.CommandRequest) *models.TxCommitBody {
 	op := &models.TxCommitBody{}
 	op.Data = &models.TxCommitData{}
 
@@ -46,7 +46,7 @@ func (s ServiceImpl) MakeTxCommitBody(request *models.CommandRequest) *models.Tx
 	return op
 }
 
-func (s ServiceImpl) Execute(request *models.CommandRequest) *models.ExecuteResponse {
+func (s ApplicationService) Execute(request *models.CommandRequest) *models.ExecuteResponse {
 	op := s.MakeTxCommitBody(request)
 	timestamp := time.Now().UnixNano() / 1e6
 	commitMsg, err := core.BroadcastTxCommit(op)
@@ -67,7 +67,7 @@ func (s ServiceImpl) Execute(request *models.CommandRequest) *models.ExecuteResp
 		Height:        commitMsg.Height}
 }
 
-func (s ServiceImpl) ExecuteAsync(request *models.CommandRequest) *models.ExecuteAsyncResponse {
+func (s ApplicationService) ExecuteAsync(request *models.CommandRequest) *models.ExecuteAsyncResponse {
 	op := s.MakeTxCommitBody(request)
 	timestamp := time.Now().UnixNano() / 1e6
 
@@ -90,13 +90,13 @@ func (s ServiceImpl) ExecuteAsync(request *models.CommandRequest) *models.Execut
 	}
 }
 
-func (s ServiceImpl) ExecuteWithPrivateKey(request *models.CommandRequest) *models.ExecuteResponse {
+func (s ApplicationService) ExecuteWithPrivateKey(request *models.CommandRequest) *models.ExecuteResponse {
 
 	key, err := database.GetKey(request.Cmd)
 	if err != nil {
 		logger.Error(err)
 	}
-	key = utils.ValidatorKey.Address.String() + PRIVATE_SEP + key
+	key = utils.ValidatorKey.Address.String() + PrivateSep + key
 	cmd, err := database.ReplaceKey(request.Cmd, key)
 	if err != nil {
 		logger.Error(err)
@@ -126,7 +126,7 @@ func (s ServiceImpl) ExecuteWithPrivateKey(request *models.CommandRequest) *mode
 	}
 }
 
-func (s ServiceImpl) Query(request *models.CommandRequest) *models.QueryResponse {
+func (s ApplicationService) Query(request *models.CommandRequest) *models.QueryResponse {
 	result, err := database.ExecuteCommand(request.Cmd)
 	if err != nil {
 		return &models.QueryResponse{
@@ -142,13 +142,13 @@ func (s ServiceImpl) Query(request *models.CommandRequest) *models.QueryResponse
 	}
 }
 
-func (s ServiceImpl) QueryPrivateKey(request *models.CommandRequest, address string) *models.QueryResponse {
+func (s ApplicationService) QueryPrivateKey(request *models.CommandRequest, address string) *models.QueryResponse {
 
 	key, err := database.GetKey(request.Cmd)
 	if err != nil {
 		logger.Error(err)
 	}
-	key = utils.ValidatorKey.Address.String() + PRIVATE_SEP + key
+	key = utils.ValidatorKey.Address.String() + PrivateSep + key
 	cmd, err := database.ReplaceKey(request.Cmd, key)
 	if err != nil {
 		logger.Error(err)
@@ -169,14 +169,14 @@ func (s ServiceImpl) QueryPrivateKey(request *models.CommandRequest, address str
 	}
 }
 
-func (s ServiceImpl) RestoreLocalDatabase() error {
+func (s ApplicationService) RestoreLocalDatabase() error {
 	database.StopRedis()
 	database.StartRedisServer()
 
 	return nil
 }
 
-func (s ServiceImpl) QueryTransaction(hash string) *models.Transaction {
+func (s ApplicationService) QueryTransaction(hash string) *models.Transaction {
 	byteHash := utils.HexToByte(hash)
 	tx, err := core.GetTx(byteHash)
 	if err != nil {
@@ -216,12 +216,12 @@ func (s ServiceImpl) QueryTransaction(hash string) *models.Transaction {
 	return transaction
 }
 
-func (s ServiceImpl) QueryBlock(height int) *models.Block {
+func (s ApplicationService) QueryBlock(height int) *models.Block {
 	originBlock := core.GetBlockFromHeight(height)
 	return s.ConvertBlock(originBlock)
 }
 
-func (s ServiceImpl) GetChainInfo(min int, max int) *models.ChainInfo {
+func (s ApplicationService) GetChainInfo(min int, max int) *models.ChainInfo {
 	info, err := core.GetChainInfo(min, max)
 	if err != nil {
 		return &models.ChainInfo{
@@ -245,7 +245,7 @@ func (s ServiceImpl) GetChainInfo(min int, max int) *models.ChainInfo {
 	return res
 }
 
-func (s ServiceImpl) GetChainState() *models.ChainState {
+func (s ApplicationService) GetChainState() *models.ChainState {
 	originState, err := core.GetChainState()
 	if err != nil {
 		return &models.ChainState{
@@ -262,7 +262,7 @@ func (s ServiceImpl) GetChainState() *models.ChainState {
 	return state
 }
 
-func (s ServiceImpl) ConvertBlockID(b *types.BlockID) *models.BlockID {
+func (s ApplicationService) ConvertBlockID(b *types.BlockID) *models.BlockID {
 	blockID := models.BlockID{}
 	blockID.Hash = utils.ByteToHex(b.Hash)
 	blockID.PartsHeader = models.PartSetHeader{
@@ -272,7 +272,7 @@ func (s ServiceImpl) ConvertBlockID(b *types.BlockID) *models.BlockID {
 	return &blockID
 }
 
-func (s ServiceImpl) ConvertBlockHeader(b *types.Header) *models.Header {
+func (s ApplicationService) ConvertBlockHeader(b *types.Header) *models.Header {
 	return &models.Header{
 		Version:            b.Version,
 		ChainID:            b.ChainID,
@@ -293,7 +293,7 @@ func (s ServiceImpl) ConvertBlockHeader(b *types.Header) *models.Header {
 	}
 }
 
-func (s ServiceImpl) ConvertBlockData(b *types.Data) *models.Data {
+func (s ApplicationService) ConvertBlockData(b *types.Data) *models.Data {
 	data := &models.Data{
 		Txs:  make([]string, 0),
 		Hash: utils.ByteToHex(b.Hash()),
@@ -304,7 +304,7 @@ func (s ServiceImpl) ConvertBlockData(b *types.Data) *models.Data {
 	return data
 }
 
-func (s ServiceImpl) ConvertCommitSign(b *types.CommitSig) *models.CommitSig {
+func (s ApplicationService) ConvertCommitSign(b *types.CommitSig) *models.CommitSig {
 
 	return &models.CommitSig{
 		Type:             b.Type,
@@ -317,7 +317,7 @@ func (s ServiceImpl) ConvertCommitSign(b *types.CommitSig) *models.CommitSig {
 	}
 }
 
-func (s ServiceImpl) ConvertBlock(b *ctypes.ResultBlock) *models.Block {
+func (s ApplicationService) ConvertBlock(b *ctypes.ResultBlock) *models.Block {
 
 	blockID := s.ConvertBlockID(&(b.BlockMeta.BlockID))
 

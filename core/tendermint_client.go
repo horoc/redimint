@@ -52,16 +52,6 @@ func ABCIDataQuery(path string, data []byte) *ctypes.ResultABCIQuery {
 	return resultABCIQuery
 }
 
-func SearchTx(query string, page int, size int) *ctypes.ResultTxSearch {
-
-	resultTx, err := tendermintHttpClient.TxSearch(query, true, page, size)
-	if err != nil {
-		logger.Error(err)
-		return nil
-	}
-	return resultTx
-}
-
 func GetTx(hash []byte) (*ctypes.ResultTx, error) {
 
 	resultTx, err := tendermintHttpClient.Tx(hash, true)
