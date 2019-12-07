@@ -3,8 +3,8 @@ package benchmark
 import (
 	"errors"
 	"fmt"
+	"github.com/chenzhou9513/DecentralizedRedis/core"
 	"github.com/chenzhou9513/DecentralizedRedis/models"
-	"github.com/chenzhou9513/DecentralizedRedis/service"
 	"strings"
 	"sync"
 	"time"
@@ -26,9 +26,9 @@ type BenchMark struct {
 func (b *BenchMark) SendTestRequest(req *models.CommandRequest, mode string) {
 	t1 := time.Now()
 	if strings.EqualFold(mode, "sync") {
-		service.AppService.ExecuteAsync(req)
+		core.AppService.ExecuteAsync(req)
 	} else if strings.EqualFold(mode, "commit") {
-		service.AppService.Execute(req)
+		core.AppService.Execute(req)
 	}
 	t2 := time.Now()
 	b.mutex.Lock()

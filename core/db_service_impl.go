@@ -1,8 +1,7 @@
-package service
+package core
 
 import (
 	"fmt"
-	"github.com/chenzhou9513/DecentralizedRedis/core"
 	"github.com/chenzhou9513/DecentralizedRedis/database"
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/models"
@@ -19,8 +18,6 @@ var AppService Service
 
 type ApplicationService struct {
 }
-
-const PrivateSep string = "_"
 
 func InitService() {
 	AppService = ApplicationService{}
@@ -49,7 +46,7 @@ func (s ApplicationService) MakeTxCommitBody(request *models.CommandRequest) *mo
 func (s ApplicationService) Execute(request *models.CommandRequest) *models.ExecuteResponse {
 	op := s.MakeTxCommitBody(request)
 	timestamp := time.Now().UnixNano() / 1e6
-	commitMsg, err := core.BroadcastTxCommit(op)
+	commitMsg, err := BroadcastTxCommit(op)
 	if err != nil {
 		return &models.ExecuteResponse{
 			Code:    code.CodeTypeTxExeCommitError,
@@ -71,7 +68,7 @@ func (s ApplicationService) ExecuteAsync(request *models.CommandRequest) *models
 	op := s.MakeTxCommitBody(request)
 	timestamp := time.Now().UnixNano() / 1e6
 
-	sync, err := core.BroadcastTxSync(op)
+	sync, err := BroadcastTxSync(op)
 	if err != nil {
 		return &models.ExecuteAsyncResponse{
 			Code:    code.CodeTypeTxExeSyncError,
@@ -106,7 +103,7 @@ func (s ApplicationService) ExecuteWithPrivateKey(request *models.CommandRequest
 	op := s.MakeTxCommitBody(request)
 	timestamp := time.Now().UnixNano() / 1e6
 
-	sync, err := core.BroadcastTxSync(op)
+	sync, err := BroadcastTxSync(op)
 	if err != nil {
 		return &models.ExecuteResponse{
 			Code:    code.CodeTypeTxExeSyncError,
@@ -178,7 +175,7 @@ func (s ApplicationService) RestoreLocalDatabase() error {
 
 func (s ApplicationService) QueryTransaction(hash string) *models.Transaction {
 	byteHash := utils.HexToByte(hash)
-	tx, err := core.GetTx(byteHash)
+	tx, err := GetTx(byteHash)
 	if err != nil {
 		return nil
 	}
@@ -219,11 +216,11 @@ func (s ApplicationService) QueryTransaction(hash string) *models.Transaction {
 func (s ApplicationService) QueryCommittedTxList(beginHeight int, endHeight int) *models.TransactionCommittedList {
 
 	txList := &models.TransactionCommittedList{
-		Total:       0,
-		Data:        make([]*models.CommittedTx, 0),
+		Total: 0,
+		Data:  make([]*models.CommittedTx, 0),
 	}
 	for i := beginHeight; i <= endHeight; i++ {
-		originBlock, err := core.GetBlockFromHeight(int64(i))
+		originBlock, err := GetBlockFromHeight(int64(i))
 		if err != nil {
 			break
 		}
@@ -239,7 +236,7 @@ func (s ApplicationService) QueryCommittedTxList(beginHeight int, endHeight int)
 }
 
 func (s ApplicationService) QueryBlock(height int) *models.Block {
-	originBlock, err := core.GetBlockFromHeight(int64(height))
+	originBlock, err := GetBlockFromHeight(int64(height))
 	if err != nil {
 		return nil
 	}
@@ -247,7 +244,7 @@ func (s ApplicationService) QueryBlock(height int) *models.Block {
 }
 
 func (s ApplicationService) GetChainInfo(min int, max int) *models.ChainInfo {
-	info, err := core.GetChainInfo(min, max)
+	info, err := GetChainInfo(min, max)
 	if err != nil {
 		return &models.ChainInfo{
 			Code:    code.CodeTypeGetChainInfoError,
@@ -271,7 +268,7 @@ func (s ApplicationService) GetChainInfo(min int, max int) *models.ChainInfo {
 }
 
 func (s ApplicationService) GetChainState() *models.ChainState {
-	originState, err := core.GetChainState()
+	originState, err := GetChainState()
 	if err != nil {
 		return &models.ChainState{
 			Code:    code.CodeTypeGetChainStateError,

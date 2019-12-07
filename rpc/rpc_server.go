@@ -3,10 +3,10 @@ package rpc
 import (
 	context "context"
 	"fmt"
+	"github.com/chenzhou9513/DecentralizedRedis/core"
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/models"
 	"github.com/chenzhou9513/DecentralizedRedis/rpc/proto"
-	s "github.com/chenzhou9513/DecentralizedRedis/service"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"net"
@@ -46,7 +46,7 @@ type DBService struct {
 
 func (r DBService) Query(c context.Context, req *proto.CommandRequest) (*proto.QueryResponse, error) {
 	fmt.Println("get resquest")
-	queryResponse := s.AppService.Query(&models.CommandRequest{Cmd: req.Cmd})
+	queryResponse := core.AppService.Query(&models.CommandRequest{Cmd: req.Cmd})
 	return &proto.QueryResponse{
 		Code:    queryResponse.Code,
 		CodeMsg: queryResponse.CodeMsg,
