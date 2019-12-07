@@ -43,7 +43,13 @@ func QueryPrivateCommand(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
 	request := &models.CommandRequest{}
 	ginMsg.DecodeRequestBody(request)
-	res := s.AppService.QueryPrivateKey(&models.CommandRequest{request.Cmd}, utils.ValidatorKey.Address.String())
+	addr := c.Query("address")
+	var res *models.QueryResponse
+	if len(addr) != 0 {
+		res = s.AppService.QueryPrivateDataWithAddress(&models.CommandRequest{request.Cmd}, strings.ToUpper(addr))
+	} else {
+		res = s.AppService.QueryPrivateDataWithAddress(&models.CommandRequest{request.Cmd}, utils.ValidatorKey.Address.String())
+	}
 	ginMsg.Response(http.StatusOK, res)
 }
 

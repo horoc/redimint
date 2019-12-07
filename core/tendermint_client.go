@@ -88,13 +88,13 @@ func GetChainState() (*ctypes.ResultStatus, error) {
 	return resultStatus, nil
 }
 
-func GetBlockFromHeight(h int) *ctypes.ResultBlock {
+func GetBlockFromHeight(h int64) (*ctypes.ResultBlock, error) {
 
-	height := int64(h)
-	resultBlock, err := tendermintHttpClient.Block(&height)
+	resultBlock, err := tendermintHttpClient.Block(&h)
 	if err != nil {
+		err = fmt.Errorf("get block error : %s, height : %d", err, h)
 		logger.Error(err)
-		return nil
+		return nil, err
 	}
-	return resultBlock
+	return resultBlock, nil
 }

@@ -35,7 +35,6 @@ type LogStoreApplication struct {
 var _ abcitypes.Application = (*LogStoreApplication)(nil)
 var LogStoreApp *LogStoreApplication
 
-const SEP string = "||"
 const PrivateSep string = "_"
 const SocketAddr string = "unix://tendermint.sock"
 const BadgerPath string = "/tmp/badger"
