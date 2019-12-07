@@ -1,10 +1,12 @@
 package core
 
+import "github.com/emirpasic/gods/sets/hashset"
+
 type Vote map[string]VoteCount
 
 type VoteCount struct {
 	N          int
-	AddressMap map[string]bool
+	AddressSet *hashset.Set
 }
 
 func NewVote() Vote {
@@ -13,16 +15,14 @@ func NewVote() Vote {
 
 func (v Vote) addVote(data string, address string) {
 	if _, ok := v[data]; !ok {
-		addressMap := make(map[string]bool)
-		addressMap[address] = true
 		v[data] = VoteCount{
 			N:          1,
-			AddressMap: addressMap,
+			AddressSet: hashset.New(address),
 		}
 	} else {
 		count := v[data]
-		if _, ok := count.AddressMap[address]; !ok {
-			count.AddressMap[address] = true
+		if !count.AddressSet.Contains(address) {
+			count.AddressSet.Add(address)
 			count.N++
 		}
 	}

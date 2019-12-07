@@ -19,23 +19,9 @@ import (
 	"strings"
 )
 
-const (
-	ValidatorSetChangePrefix string = "val:"
-)
-
-/*
-
-	内存db的组织形式：
-		1. logIndex : log == 1 : set x 1
-		2. heightIndex : logList == 1 : set a 1 || set c 1 || ...
-
-*/
-
 type LogStoreApplication struct {
-	db                *badger.DB
-	currentBatch      *badger.Txn
-	currentHeight     atomic.Int64
-	currentHeightList []string
+	db           *badger.DB
+	currentBatch *badger.Txn
 
 	valUpdates         []abcitypes.ValidatorUpdate
 	valAddrToPubKeyMap map[string]abcitypes.PubKey
@@ -50,7 +36,7 @@ var _ abcitypes.Application = (*LogStoreApplication)(nil)
 var LogStoreApp *LogStoreApplication
 
 const SEP string = "||"
-const PRIVATE_SEP string = "_"
+const PrivateSep string = "_"
 const SocketAddr string = "unix://tendermint.sock"
 const BadgerPath string = "/tmp/badger"
 
@@ -68,16 +54,6 @@ func InitLogStoreApplication() {
 	}
 }
 
-func (LogStoreApplication) IsValidatorUpdateTx(tx []byte) bool {
-	commitBody := models.TxCommitBody{}
-	utils.JsonToStruct(tx, &commitBody)
-
-	if commitBody.Data != nil {
-		return false
-	}
-	return true
-}
-
 func (LogStoreApplication) SetOption(req abcitypes.RequestSetOption) abcitypes.ResponseSetOption {
 	return abcitypes.ResponseSetOption{}
 }
@@ -87,10 +63,6 @@ func (LogStoreApplication) Info(req abcitypes.RequestInfo) abcitypes.ResponseInf
 }
 
 func (app *LogStoreApplication) isValid(tx []byte) (uint32, string) {
-	// TODO check query or execution
-	// TODO 语法检验
-	// TODO 过滤一些不能用的命令
-
 	var data []byte
 	var sign string
 	var address string
@@ -101,6 +73,12 @@ func (app *LogStoreApplication) isValid(tx []byte) (uint32, string) {
 		data = utils.StructToJson(commitBody.Data)
 		sign = commitBody.Signature
 		address = commitBody.Address
+		if !database.IsValidCmd(commitBody.Data.Operation) {
+			return c.CodeTypeInvalidTx, fmt.Sprintf("Invalid redis command : %s", commitBody.Data.Operation)
+		}
+		if database.IsQueryCmd(commitBody.Data.Operation) {
+			return c.CodeTypeInvalidTx, fmt.Sprintf("Read only command can not commit to tendermint : %s", commitBody.Data.Operation)
+		}
 	} else {
 		commitBody := models.ValidatorUpdateBody{}
 		utils.JsonToStruct(tx, &commitBody)
@@ -123,11 +101,26 @@ func (app *LogStoreApplication) isValid(tx []byte) (uint32, string) {
 	return c.CodeTypeOK, c.Info(c.CodeTypeOK)
 }
 
+//#################### InitChain ####################
+func (app *LogStoreApplication) InitChain(req abcitypes.RequestInitChain) abcitypes.ResponseInitChain {
+	//TODO 清空Redis, 重启的是时候会初始化
+	for _, v := range req.Validators {
+		r := app.updateValidator(v)
+		if r.IsErr() {
+			logger.Error(r)
+		}
+	}
+	return abcitypes.ResponseInitChain{}
+}
+
+//#################### CheckTx ####################
 func (app *LogStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
 	app.initFlag = false
 	code, info := app.isValid(req.Tx)
+	if code != c.CodeTypeOK {
+		return abcitypes.ResponseCheckTx{Code: code, GasWanted: 1, Info: info}
+	}
 	commitBody := models.TxCommitBody{}
-	fmt.Println(commitBody)
 	utils.JsonToStruct(req.Tx, &commitBody)
 	if app.IsPrivateCommand(commitBody) && strings.EqualFold(commitBody.Address, utils.ValidatorKey.Address.String()) {
 		res, err := database.ExecuteCommand(commitBody.Data.Operation)
@@ -140,35 +133,9 @@ func (app *LogStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.
 	return abcitypes.ResponseCheckTx{Code: code, GasWanted: 1, Info: info}
 }
 
-func (app *LogStoreApplication) IsPrivateCommand(commitBody models.TxCommitBody) bool {
-	key, err := database.GetKey(commitBody.Data.Operation)
-	if err != nil {
-		logger.Error(err)
-	}
-	split := strings.Split(key, PRIVATE_SEP)
-	if _, ok := app.valAddrToPubKeyMap[split[0]]; ok && strings.EqualFold(split[0], commitBody.Address) {
-		return true
-	}
-	return false
-}
-
-func (app *LogStoreApplication) InitChain(req abcitypes.RequestInitChain) abcitypes.ResponseInitChain {
-	//TODO 清空Redis, 重启的是时候会初始化
-	for _, v := range req.Validators {
-		r := app.updateValidator(v)
-		if r.IsErr() {
-			logger.Error(r)
-		}
-	}
-	return abcitypes.ResponseInitChain{}
-}
-
+//#################### BeginBlock ####################
 func (app *LogStoreApplication) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.ResponseBeginBlock {
-	app.currentHeightList = make([]string, 0)
-	app.currentHeight.CAS(app.currentHeight.Load(), req.Header.Height)
-	app.currentBatch = app.db.NewTransaction(true)
-
-	//重置
+	//reset valUpdates
 	app.valUpdates = make([]abcitypes.ValidatorUpdate, 0)
 
 	for _, ev := range req.ByzantineValidators {
@@ -186,20 +153,19 @@ func (app *LogStoreApplication) BeginBlock(req abcitypes.RequestBeginBlock) abci
 	return abcitypes.ResponseBeginBlock{}
 }
 
+//#################### DeliverTx ####################
 func (app *LogStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
 	if app.IsValidatorUpdateTx(req.Tx) {
 		return app.execValidatorTx(req.Tx)
 	}
 
-	response := abcitypes.ResponseDeliverTx{}
-	code, msg := app.isValid(req.Tx)
+	code, info := app.isValid(req.Tx)
 	if code != c.CodeTypeOK {
-		return abcitypes.ResponseDeliverTx{Code: code, Info: msg}
+		return abcitypes.ResponseDeliverTx{Code: code, Info: info}
 	}
+
 	commitBody := models.TxCommitBody{}
 	utils.JsonToStruct(req.Tx, &commitBody)
-	fmt.Println("Deliver")
-	fmt.Println(commitBody.Data.Operation)
 	if app.IsPrivateCommand(commitBody) {
 		if app.initFlag || !strings.EqualFold(commitBody.Address, utils.ValidatorKey.Address.String()) {
 			_, err := database.ExecuteCommand(commitBody.Data.Operation)
@@ -208,39 +174,24 @@ func (app *LogStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcity
 				panic(err)
 			}
 		}
-		return abcitypes.ResponseDeliverTx{Code: c.CodeTypeOK, Info: msg}
+		return abcitypes.ResponseDeliverTx{Code: c.CodeTypeOK, Info: c.Info(c.CodeTypeOK)}
+	} else {
+		app.logSize.Add(1)
+		res, err := database.ExecuteCommand(commitBody.Data.Operation)
+		if err != nil {
+			logger.Error(err)
+			panic(err)
+		}
+		return abcitypes.ResponseDeliverTx{Code: c.CodeTypeOK, Data: []byte("Result:" + res)}
 	}
-
-	app.logSize.Add(1)
-	err := app.currentBatch.Set([]byte(strconv.FormatInt(app.logSize.Load(), 10)), []byte(commitBody.Data.Operation))
-	app.currentHeightList = append(app.currentHeightList, commitBody.Data.Operation)
-	//TODO 事务提交, 重试
-	res, err := database.ExecuteCommand(commitBody.Data.Operation)
-	response.Code = c.CodeTypeOK
-	response.Data = []byte("Result:" + res)
-	if err != nil {
-		logger.Error(err)
-		panic(err)
-	}
-	return response
 }
 
+//#################### Commit ####################
 func (app *LogStoreApplication) Commit() abcitypes.ResponseCommit {
-	app.currentBatch.Commit()
-	txn := app.db.NewTransaction(true)
-	err := txn.Set([]byte(fmt.Sprintf("h%d", app.currentHeight.Load())), []byte(strings.Join(app.currentHeightList, SEP)))
-	if err != nil {
-		logger.Error(err)
-		panic(err)
-	}
-	err = txn.Commit()
-	if err != nil {
-		logger.Error(err)
-		panic(err)
-	}
 	return abcitypes.ResponseCommit{Data: []byte{}}
 }
 
+//#################### EndBlock ####################
 func (app *LogStoreApplication) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
 	return abcitypes.ResponseEndBlock{ValidatorUpdates: app.valUpdates}
 }
@@ -274,34 +225,6 @@ func (app *LogStoreApplication) execValidatorTx(tx []byte) abcitypes.ResponseDel
 	}
 
 	return abcitypes.ResponseDeliverTx{Code: 0}
-}
-
-func (app *LogStoreApplication) GetLogFromHeight(h int) []string {
-	var logs = make([]string, 0)
-	err := app.db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get([]byte(fmt.Sprintf("h%d", h)))
-		if err != nil && err != badger.ErrKeyNotFound {
-			logger.Error(err)
-			return err
-		}
-		if err == badger.ErrKeyNotFound {
-			return nil
-		} else {
-			return item.Value(func(val []byte) error {
-				split := strings.Split(string(val), SEP)
-				for _, v := range split {
-					logs = append(logs, v)
-				}
-				return nil
-			})
-		}
-
-	})
-	if err != nil {
-		logger.Error(err)
-		panic(err)
-	}
-	return logs
 }
 
 func (app *LogStoreApplication) Query(reqQuery abcitypes.RequestQuery) (resQuery abcitypes.ResponseQuery) {
@@ -362,6 +285,29 @@ func (app *LogStoreApplication) updateValidator(v abcitypes.ValidatorUpdate) abc
 	app.valUpdates = append(app.valUpdates, v)
 
 	return abcitypes.ResponseDeliverTx{Code: 0}
+}
+
+func (LogStoreApplication) IsValidatorUpdateTx(tx []byte) bool {
+	commitBody := models.TxCommitBody{}
+	utils.JsonToStruct(tx, &commitBody)
+
+	if commitBody.Data != nil {
+		return false
+	}
+	return true
+}
+
+func (app *LogStoreApplication) IsPrivateCommand(commitBody models.TxCommitBody) bool {
+	key, err := database.GetKey(commitBody.Data.Operation)
+	if err != nil {
+		logger.Error(err)
+		return false
+	}
+	split := strings.Split(key, PrivateSep)
+	if _, ok := app.valAddrToPubKeyMap[split[0]]; ok && strings.EqualFold(split[0], commitBody.Address) {
+		return true
+	}
+	return false
 }
 
 func (app *LogStoreApplication) updateBadgerVal(key []byte, val []byte) error {
