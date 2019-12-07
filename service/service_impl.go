@@ -48,13 +48,14 @@ func (s ServiceImpl) MakeTxCommitBody(request *models.CommandRequest) *models.Tx
 
 func (s ServiceImpl) Execute(request *models.CommandRequest) *models.ExecuteResponse {
 	op := s.MakeTxCommitBody(request)
-	//timestamp
 	timestamp := time.Now().UnixNano() / 1e6
-	//tendermint response
-	commitMsg := core.BroadcastTxCommit(op)
-
-	//TODO 错误处理
-
+	commitMsg, err := core.BroadcastTxCommit(op)
+	if err != nil {
+		return &models.ExecuteResponse{
+			Code:    code.CodeTypeTxExeCommitError,
+			CodeMsg: err.Error(),
+		}
+	}
 	return &models.ExecuteResponse{Code: code.CodeTypeOK,
 		CodeMsg:       code.Info(code.CodeTypeOK),
 		Cmd:           request.Cmd,
@@ -68,10 +69,15 @@ func (s ServiceImpl) Execute(request *models.CommandRequest) *models.ExecuteResp
 
 func (s ServiceImpl) ExecuteAsync(request *models.CommandRequest) *models.ExecuteAsyncResponse {
 	op := s.MakeTxCommitBody(request)
-	//timestamp
 	timestamp := time.Now().UnixNano() / 1e6
 
-	sync := core.BroadcastTxSync(op)
+	sync, err := core.BroadcastTxSync(op)
+	if err != nil {
+		return &models.ExecuteAsyncResponse{
+			Code:    code.CodeTypeTxExeSyncError,
+			CodeMsg: err.Error(),
+		}
+	}
 
 	return &models.ExecuteAsyncResponse{
 		Code:      code.CodeTypeOK,
@@ -98,21 +104,25 @@ func (s ServiceImpl) ExecuteWithPrivateKey(request *models.CommandRequest) *mode
 	request.Cmd = cmd
 
 	op := s.MakeTxCommitBody(request)
-
-	//timestamp
 	timestamp := time.Now().UnixNano() / 1e6
 
-	sync := core.BroadcastTxSync(op)
+	sync, err := core.BroadcastTxSync(op)
+	if err != nil {
+		return &models.ExecuteResponse{
+			Code:    code.CodeTypeTxExeSyncError,
+			CodeMsg: err.Error(),
+		}
+	}
 
 	return &models.ExecuteResponse{
-		Code:      code.CodeTypeOK,
-		CodeMsg:   code.Info(code.CodeTypeOK),
-		Cmd:       op.Data.Operation,
+		Code:          code.CodeTypeOK,
+		CodeMsg:       code.Info(code.CodeTypeOK),
+		Cmd:           op.Data.Operation,
 		ExecuteResult: string(sync.Data),
-		Signature: op.Signature,
-		Sequence:  op.Data.Sequence,
-		TimeStamp: strconv.FormatInt(timestamp, 10),
-		Hash:      utils.ByteToHex(sync.Hash),
+		Signature:     op.Signature,
+		Sequence:      op.Data.Sequence,
+		TimeStamp:     strconv.FormatInt(timestamp, 10),
+		Hash:          utils.ByteToHex(sync.Hash),
 	}
 }
 
@@ -168,7 +178,10 @@ func (s ServiceImpl) RestoreLocalDatabase() error {
 
 func (s ServiceImpl) QueryTransaction(hash string) *models.Transaction {
 	byteHash := utils.HexToByte(hash)
-	tx := core.GetTx(byteHash)
+	tx, err := core.GetTx(byteHash)
+	if err != nil {
+		return nil
+	}
 	data := &models.TxCommitBody{}
 	utils.JsonToStruct(tx.Tx, data)
 
@@ -209,8 +222,16 @@ func (s ServiceImpl) QueryBlock(height int) *models.Block {
 }
 
 func (s ServiceImpl) GetChainInfo(min int, max int) *models.ChainInfo {
-	info := core.GetChainInfo(min, max)
+	info, err := core.GetChainInfo(min, max)
+	if err != nil {
+		return &models.ChainInfo{
+			Code:    code.CodeTypeGetChainInfoError,
+			CodeMsg: err.Error(),
+		}
+	}
 	res := &models.ChainInfo{
+		Code:       code.CodeTypeOK,
+		CodeMsg:    code.Info(code.CodeTypeOK),
 		LastHeight: info.LastHeight,
 		BlockMetas: make([]*models.BlockMeta, 0),
 	}
@@ -225,10 +246,18 @@ func (s ServiceImpl) GetChainInfo(min int, max int) *models.ChainInfo {
 }
 
 func (s ServiceImpl) GetChainState() *models.ChainState {
-	originState := core.GetChainState()
-	state := &models.ChainState{}
+	originState, err := core.GetChainState()
+	if err != nil {
+		return &models.ChainState{
+			Code:    code.CodeTypeGetChainStateError,
+			CodeMsg: err.Error(),
+		}
+	}
+	state := &models.ChainState{
+		Code:    code.CodeTypeOK,
+		CodeMsg: code.Info(code.CodeTypeOK),
+	}
 	utils.JsonToStruct(utils.StructToJson(originState), state)
-	fmt.Println(originState.ValidatorInfo.PubKey)
 	state.ValidatorInfo.PubKey = originState.ValidatorInfo.PubKey.Bytes()
 	return state
 }

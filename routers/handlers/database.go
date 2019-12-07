@@ -5,6 +5,7 @@ import (
 	"github.com/chenzhou9513/DecentralizedRedis/benchmark"
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/models"
+	"github.com/chenzhou9513/DecentralizedRedis/models/code"
 	s "github.com/chenzhou9513/DecentralizedRedis/service"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	"github.com/gin-gonic/gin"
@@ -25,6 +26,8 @@ func ExecuteCommand(c *gin.Context) {
 	} else if strings.EqualFold(request.Mode, "private") {
 		res := s.AppService.ExecuteWithPrivateKey(&models.CommandRequest{request.Cmd})
 		ginMsg.Response(http.StatusOK, res)
+	} else {
+		ginMsg.ErrorResponse(http.StatusOK, code.CodeTypeInvalidExecuteMode, fmt.Sprintf("Invalid mode : %s", request.Mode))
 	}
 }
 

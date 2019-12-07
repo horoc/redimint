@@ -13,22 +13,27 @@ type GinMsg struct {
 	C *gin.Context
 }
 
-type Response struct {
-	Code int         `json:"code"`
-	Msg  string      `json:"msg"`
-	Data interface{} `json:"data"`
+type ErrorResponse struct {
+	Code    uint32 `json:"code"`
+	CodeMsg string `json:"code_info"`
 }
 
 func (g *GinMsg) Response(httpCode int, data interface{}) {
 	g.C.JSON(httpCode, data)
 	return
 }
+func (g *GinMsg) ErrorResponse(httpCode int, code uint32, codeMsg string) {
+	g.C.JSON(httpCode, &ErrorResponse{
+		Code:    code,
+		CodeMsg: codeMsg,
+	})
+	return
+}
+
 func (g *GinMsg) DecodeRequestBody(data interface{}) {
 	body, _ := ioutil.ReadAll(g.C.Request.Body)
 	utils.JsonToStruct(body, data)
 }
-
-
 
 // The main purpose of HexBytes is to enable HEX-encoding for json/encoding.
 type HexBytes []byte
