@@ -82,7 +82,7 @@ func ExecuteCommand(command string) (string, error) {
 
 func IsValidCmd(command string) bool {
 	split := strings.Split(command, " ")
-	if len(split) < 2 || !readOnlyCommand.Contains(split[0]) && !writeCommand.Contains(split[0]) {
+	if len(split) < 2 || !readOnlyCommand.Contains(strings.ToUpper(split[0])) && !writeCommand.Contains(strings.ToUpper(split[0])) {
 		return false
 	}
 	return true
@@ -90,7 +90,7 @@ func IsValidCmd(command string) bool {
 
 func IsQueryCmd(command string) bool {
 	split := strings.Split(command, " ")
-	if len(split) < 2 || !readOnlyCommand.Contains(split[0]) {
+	if len(split) < 2 || !readOnlyCommand.Contains(strings.ToUpper(split[0])) {
 		return false
 	}
 	return true

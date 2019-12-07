@@ -142,7 +142,7 @@ func (s ApplicationService) Query(request *models.CommandRequest) *models.QueryR
 	}
 }
 
-func (s ApplicationService) QueryPrivateKey(request *models.CommandRequest, address string) *models.QueryResponse {
+func (s ApplicationService) QueryPrivateDataWithAddress(request *models.CommandRequest, address string) *models.QueryResponse {
 
 	key, err := database.GetKey(request.Cmd)
 	if err != nil {
@@ -216,8 +216,33 @@ func (s ApplicationService) QueryTransaction(hash string) *models.Transaction {
 	return transaction
 }
 
+func (s ApplicationService) QueryCommittedTxList(beginHeight int, endHeight int) *models.TransactionCommittedList {
+
+	txList := &models.TransactionCommittedList{
+		Total:       0,
+		Data:        make([]*models.CommittedTx, 0),
+	}
+	for i := beginHeight; i <= endHeight; i++ {
+		originBlock, err := core.GetBlockFromHeight(int64(i))
+		if err != nil {
+			break
+		}
+		for _, tx := range originBlock.Block.Txs {
+			data := &models.CommittedTx{}
+			utils.JsonToStruct(tx, data)
+			data.Height = int64(i)
+			txList.Data = append(txList.Data, data)
+		}
+	}
+	txList.Total = int64(len(txList.Data))
+	return txList
+}
+
 func (s ApplicationService) QueryBlock(height int) *models.Block {
-	originBlock := core.GetBlockFromHeight(height)
+	originBlock, err := core.GetBlockFromHeight(int64(height))
+	if err != nil {
+		return nil
+	}
 	return s.ConvertBlock(originBlock)
 }
 

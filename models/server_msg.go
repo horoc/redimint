@@ -1,7 +1,7 @@
 package models
 
 type ExecuteRequest struct {
-	Cmd string `json:"cmd"`
+	Cmd  string `json:"cmd"`
 	Mode string `json:"mode"`
 }
 
@@ -11,6 +11,11 @@ type TxHashRequest struct {
 
 type BlockHeightRequest struct {
 	Height int `json:"height"`
+}
+
+type CommittedTxListRequest struct {
+	Begin int `json:"begin_height"`
+	End   int `json:"end_height"`
 }
 
 type ChainInfoRequest struct {

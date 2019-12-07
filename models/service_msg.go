@@ -68,6 +68,18 @@ type ProofDetail struct {
 	Aunts    []string `json:"aunts"`     // Hashes from leaf's sibling to a root's child.
 }
 
+type TransactionCommittedList struct {
+	Total 		int64 `json:"total"`
+	Data        []*CommittedTx `json:"data"`
+}
+type CommittedTx struct {
+	Data      *TxCommitData `json:"data"`
+	Signature string `json:"signature"`
+	Address   string `json:"address"`
+	Height 	  int64  `json:"height"`
+}
+
+
 //Block
 type BlockMeta struct {
 	BlockID `json:"block_id"`

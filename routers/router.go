@@ -21,6 +21,7 @@ func InitRouter() *gin.Engine {
 	chain := r.Group("/chain")
 	{
 		chain.GET("/transaction", handlers.GetTransactionByHash)
+		chain.GET("/transaction_list", handlers.GetCommittedTxList)
 		chain.GET("/block", handlers.GetBlockByHeight)
 		chain.GET("/state", handlers.GetChainState)
 		chain.GET("/info", handlers.GetChainInfo)

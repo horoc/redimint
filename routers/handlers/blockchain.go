@@ -16,6 +16,14 @@ func GetTransactionByHash(c *gin.Context) {
 	ginMsg.Response(http.StatusOK, res)
 }
 
+func GetCommittedTxList(c *gin.Context) {
+	ginMsg := models.GinMsg{C: c}
+	request := &models.CommittedTxListRequest{}
+	ginMsg.DecodeRequestBody(request)
+	res := s.AppService.QueryCommittedTxList(request.Begin, request.End)
+	ginMsg.Response(http.StatusOK, res)
+}
+
 func GetBlockByHeight(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
 	request := &models.BlockHeightRequest{}
