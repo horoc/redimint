@@ -22,3 +22,14 @@ type ChainInfoRequest struct {
 	Min int `json:"min"`
 	Max int `json:"max"`
 }
+
+type LoginRequest struct {
+	Name     string `json:"db_name"`
+	Password string `json:"db_password"`
+}
+
+type TokenResponse struct {
+	Code    uint32 `json:"code"`
+	CodeMsg string `json:"code_info"`
+	Token   string `json:"token"`
+}

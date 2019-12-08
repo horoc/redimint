@@ -10,6 +10,7 @@ require (
 	dmitri.shuralyov.com/gpu/mtl v0.0.0-20191126053124-fec1b7b612ab // indirect
 	github.com/creack/pty v1.1.9 // indirect
 	github.com/dgraph-io/badger v1.6.0
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/emirpasic/gods v1.12.0
 	github.com/envoyproxy/go-control-plane v0.9.1 // indirect
 	github.com/gin-gonic/gin v1.5.0

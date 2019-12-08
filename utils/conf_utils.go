@@ -9,11 +9,12 @@ import (
 )
 
 type Configuration struct {
+	App        AppConfig        `yaml:"app-config"`
+	Rpc        RpcConfig        `yaml:"rpc-config"`
+	IPFS       IPFSConfig       `yaml:"ipfs-config"`
 	Redis      RedisConfig      `yaml:"redis-config"`
 	Tendermint TendermintConfig `yaml:"tendermint-config"`
-	IPFS       IPFSConfig       `yaml:"ipfs-config"`
 	HttpServer HttpServerConfig `yaml:"http-server-config"`
-	Rpc        RpcConfig        `yaml:"rpc-config"`
 }
 
 type RedisConfig struct {
@@ -42,6 +43,11 @@ type HttpServerConfig struct {
 
 type RpcConfig struct {
 	Port int `yaml:"port"`
+}
+
+type AppConfig struct {
+	Name string `yaml:"name"`
+	Auth string `yaml:"auth"`
 }
 
 var Config Configuration

@@ -2,6 +2,7 @@ package routers
 
 import (
 	"github.com/chenzhou9513/DecentralizedRedis/routers/handlers"
+	"github.com/chenzhou9513/DecentralizedRedis/routers/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -9,7 +10,10 @@ func InitRouter() *gin.Engine {
 
 	r := gin.Default()
 
+	r.POST("/login", handlers.Login)
+
 	db := r.Group("/db")
+	db.Use(middleware.Authorization())
 	{
 		db.GET("/benchmark", handlers.BenchMarkTest)
 		db.GET("/query", handlers.QueryCommand)
@@ -19,6 +23,7 @@ func InitRouter() *gin.Engine {
 	}
 
 	chain := r.Group("/chain")
+	db.Use(middleware.Authorization())
 	{
 		chain.GET("/transaction", handlers.GetTransactionByHash)
 		chain.GET("/transaction_list", handlers.GetCommittedTxList)
