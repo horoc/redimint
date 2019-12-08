@@ -11,9 +11,13 @@ const (
 	CodeTypeGetChainInfoError   = 7
 	CodeTypeGetChainStateError  = 8
 	CodeTypeInvalidExecuteMode  = 9
-	CodeTypeInvalidRedisCommand  = 10
-	CodeTypeInvalidTx  = 11
-
+	CodeTypeInvalidRedisCommand = 10
+	CodeTypeInvalidTx           = 11
+	CodeTypePermissionDenied    = 12
+	CodeTypeTokenTimeoutError   = 13
+	CodeTypeTokenInvalidError   = 14
+	CodeTypeIncorrectPassword   = 15
+	CodeTypeInternalError       = 16
 )
 
 func InfoWithDetail(p int, msg string) string {
