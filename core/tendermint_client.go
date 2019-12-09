@@ -98,3 +98,15 @@ func GetBlockFromHeight(h int64) (*ctypes.ResultBlock, error) {
 	}
 	return resultBlock, nil
 }
+
+func UpdateValidator(update *models.ValidatorUpdateBody) (*ctypes.ResultBroadcastTxCommit, error) {
+	tx := types.Tx(utils.StructToJson(update))
+	resultBroadcastTxCommit, err := tendermintHttpClient.BroadcastTxCommit(tx)
+	fmt.Println(string(utils.StructToJson(resultBroadcastTxCommit)))
+	if err != nil {
+		err = fmt.Errorf("BroadcastTxCommit command error : %s, %s", tx, err)
+		logger.Error(err)
+		return nil, err
+	}
+	return resultBroadcastTxCommit, nil
+}

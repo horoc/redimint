@@ -110,7 +110,10 @@ func (n NodeKeySignMethod) Alg() string {
 }
 
 type Claims struct {
-	Address string `json:"username"`
+	Address  string `json:"address"`
+	Mode     string `json:"mode"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 	jwt.StandardClaims
 }
 
@@ -121,11 +124,14 @@ func InitJWTMethod() {
 }
 
 // GenerateToken generate tokens used for auth
-func GenerateToken(address string) (string, error) {
+func GenerateToken(address string, mode string, username string, password string) (string, error) {
 	nowTime := time.Now()
 	expireTime := nowTime.Add(3 * time.Hour)
 	claims := Claims{
 		EncodeMD5(address),
+		EncodeMD5(mode),
+		EncodeMD5(username),
+		EncodeMD5(password),
 		jwt.StandardClaims{
 			ExpiresAt: expireTime.Unix(),
 			Issuer:    Config.App.Name,

@@ -10,6 +10,7 @@ import (
 	c "github.com/chenzhou9513/DecentralizedRedis/models/code"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	"github.com/dgraph-io/badger"
+	"github.com/tendermint/tendermint/abci/example/code"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -23,9 +24,10 @@ type LogStoreApplication struct {
 	db           *badger.DB
 	currentBatch *badger.Txn
 
-	valUpdates         []abcitypes.ValidatorUpdate
-	valAddrToPubKeyMap map[string]abcitypes.PubKey
-	valAddrVote        Vote
+	valUpdates             []abcitypes.ValidatorUpdate
+	valAddrToPubKeyMap     map[string]abcitypes.PubKey
+	valAddrVote            Vote
+	committedValidatorVote Vote
 
 	logSize atomic.Int64
 
@@ -36,6 +38,8 @@ var _ abcitypes.Application = (*LogStoreApplication)(nil)
 var LogStoreApp *LogStoreApplication
 
 const PrivateSep string = "_"
+const VoteKeySep string = ":"
+
 const SocketAddr string = "unix://tendermint.sock"
 const BadgerPath string = "/tmp/badger"
 
@@ -46,10 +50,11 @@ func InitLogStoreApplication() {
 		os.Exit(1)
 	}
 	LogStoreApp = &LogStoreApplication{
-		db:                 logDb,
-		valAddrToPubKeyMap: make(map[string]abcitypes.PubKey),
-		valAddrVote:        NewVote(),
-		initFlag:           true,
+		db:                     logDb,
+		valAddrToPubKeyMap:     make(map[string]abcitypes.PubKey),
+		valAddrVote:            NewVote(),
+		committedValidatorVote: NewVote(),
+		initFlag:               true,
 	}
 }
 
@@ -96,7 +101,6 @@ func (app *LogStoreApplication) isValid(tx []byte) (uint32, string) {
 	if pubkey.VerifyBytes(data, utils.HexToByte(sign)) != true {
 		return c.CodeTypeInvalidSign, c.Info(c.CodeTypeInvalidSign)
 	}
-
 	return c.CodeTypeOK, c.Info(c.CodeTypeOK)
 }
 
@@ -119,15 +123,18 @@ func (app *LogStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.
 	if code != c.CodeTypeOK {
 		return abcitypes.ResponseCheckTx{Code: code, GasWanted: 1, Info: info}
 	}
-	commitBody := models.TxCommitBody{}
-	utils.JsonToStruct(req.Tx, &commitBody)
-	if app.IsPrivateCommand(commitBody) && strings.EqualFold(commitBody.Address, utils.ValidatorKey.Address.String()) {
-		res, err := database.ExecuteCommand(commitBody.Data.Operation)
-		if err != nil {
-			logger.Error(err)
-			panic(err)
+
+	if !app.IsValidatorUpdateTx(req.Tx) {
+		commitBody := models.TxCommitBody{}
+		utils.JsonToStruct(req.Tx, &commitBody)
+		if app.IsPrivateCommand(commitBody) && strings.EqualFold(commitBody.Address, utils.ValidatorKey.Address.String()) {
+			res, err := database.ExecuteCommand(commitBody.Data.Operation)
+			if err != nil {
+				logger.Error(err)
+				panic(err)
+			}
+			return abcitypes.ResponseCheckTx{Code: code, GasWanted: 1, Info: info, Data: []byte("Result:" + res)}
 		}
-		return abcitypes.ResponseCheckTx{Code: code, GasWanted: 1, Info: info, Data: []byte("Result:" + res)}
 	}
 	return abcitypes.ResponseCheckTx{Code: code, GasWanted: 1, Info: info}
 }
@@ -136,7 +143,6 @@ func (app *LogStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.
 func (app *LogStoreApplication) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.ResponseBeginBlock {
 	//reset valUpdates
 	app.valUpdates = make([]abcitypes.ValidatorUpdate, 0)
-
 	for _, ev := range req.ByzantineValidators {
 		if ev.Type == tmtypes.ABCIEvidenceTypeDuplicateVote {
 			// decrease voting power by 1
@@ -192,10 +198,10 @@ func (app *LogStoreApplication) Commit() abcitypes.ResponseCommit {
 
 //#################### EndBlock ####################
 func (app *LogStoreApplication) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
+	fmt.Println(string(utils.StructToJson(app.valUpdates)))
 	return abcitypes.ResponseEndBlock{ValidatorUpdates: app.valUpdates}
 }
 
-//val:address1!power1  一次只允许更新一个
 func (app *LogStoreApplication) execValidatorTx(tx []byte) abcitypes.ResponseDeliverTx {
 	update := models.ValidatorUpdateBody{}
 	utils.JsonToStruct(tx, &update)
@@ -218,12 +224,22 @@ func (app *LogStoreApplication) execValidatorTx(tx []byte) abcitypes.ResponseDel
 			Log:  c.Info(c.CodeTypeEncodingError)}
 	}
 
-	app.valAddrVote.addVote(pubkeyS, update.Address)
-	if app.valAddrVote.getVoteNum(pubkeyS) >= len(app.valAddrToPubKeyMap) {
+	//publicKey:power
+	voteKey := pubkeyS + VoteKeySep + powerS
+
+	app.valAddrVote.addVote(voteKey, update.Address, update)
+	count := app.valAddrVote[voteKey]
+	if app.valAddrVote.getVoteNum(voteKey) >= len(app.valAddrToPubKeyMap)*2/3 {
 		app.updateValidator(abcitypes.Ed25519ValidatorUpdate(pubkey, power))
+		app.committedValidatorVote[voteKey] = count
+		delete(app.valAddrVote, voteKey)
 	}
 
-	return abcitypes.ResponseDeliverTx{Code: 0}
+	return abcitypes.ResponseDeliverTx{Code: code.CodeTypeOK, Data: utils.StructToJson(count)}
+}
+
+func (app *LogStoreApplication) QueryVotingValidators() *Vote {
+	return &app.valAddrVote
 }
 
 func (app *LogStoreApplication) Query(reqQuery abcitypes.RequestQuery) (resQuery abcitypes.ResponseQuery) {

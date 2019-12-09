@@ -281,7 +281,33 @@ func (s ApplicationService) GetChainState() *models.ChainState {
 	}
 	utils.JsonToStruct(utils.StructToJson(originState), state)
 	state.ValidatorInfo.PubKey = originState.ValidatorInfo.PubKey.Bytes()
+	state.ValidatorInfo.VotingPower = originState.ValidatorInfo.VotingPower
 	return state
+}
+
+func (s ApplicationService) QueryVotingValidators() *Vote {
+	return LogStoreApp.QueryVotingValidators()
+}
+
+func (s ApplicationService) UpdateValidators(update *models.ValidatorUpdateData) *VoteCount {
+
+	updateBody := &models.ValidatorUpdateBody{
+		ValidatorUpdate: update,
+		Signature:       "",
+		Address:         "",
+	}
+
+	updateBody.Signature = utils.ValidatorStringSign(utils.StructToJson(updateBody.ValidatorUpdate))
+	updateBody.Address = utils.ValidatorKey.Address.String()
+
+	commit, err := UpdateValidator(updateBody)
+	if err != nil {
+		logger.Error(err)
+		return nil
+	}
+	vote := &VoteCount{}
+	utils.JsonToStruct(commit.DeliverTx.Data, vote)
+	return vote
 }
 
 func (s ApplicationService) ConvertBlockID(b *types.BlockID) *models.BlockID {

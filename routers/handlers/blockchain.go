@@ -45,3 +45,17 @@ func GetChainInfo(c *gin.Context) {
 	res := core.AppService.GetChainInfo(request.Min, request.Max)
 	ginMsg.Response(http.StatusOK, res)
 }
+
+func GetVotingValidator(c *gin.Context) {
+	ginMsg := models.GinMsg{C: c}
+	res := core.AppService.QueryVotingValidators()
+	ginMsg.Response(http.StatusOK, res)
+}
+
+func UpdateValidators(c *gin.Context) {
+	ginMsg := models.GinMsg{C: c}
+	request := &models.ValidatorUpdateData{}
+	ginMsg.DecodeRequestBody(request)
+	res := core.AppService.UpdateValidators(request)
+	ginMsg.Response(http.StatusOK, res)
+}
