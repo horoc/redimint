@@ -46,8 +46,10 @@ type RpcConfig struct {
 }
 
 type AppConfig struct {
-	Name string `yaml:"name"`
-	Auth string `yaml:"auth"`
+	Name          string `yaml:"name"`
+	DbPassword    string `yaml:"db_password"`
+	AdminUser     string `yaml:"admin_user"`
+	AdminPassword string `yaml:"admin_passowrd"`
 }
 
 var Config Configuration

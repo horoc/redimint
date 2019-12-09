@@ -3,7 +3,6 @@ package core
 import "github.com/chenzhou9513/DecentralizedRedis/models"
 
 type Service interface {
-
 	RestoreLocalDatabase() error
 	Query(request *models.CommandRequest) *models.QueryResponse
 	QueryPrivateDataWithAddress(request *models.CommandRequest, address string) *models.QueryResponse
@@ -15,6 +14,8 @@ type Service interface {
 	QueryTransaction(hash string) *models.Transaction
 	QueryCommittedTxList(beginHeight int, endHeight int) *models.TransactionCommittedList
 	QueryBlock(height int) *models.Block
+	QueryVotingValidators() *Vote
+	UpdateValidators(update *models.ValidatorUpdateData) *VoteCount
 
 	GetChainState() *models.ChainState
 	GetChainInfo(min int, max int) *models.ChainInfo

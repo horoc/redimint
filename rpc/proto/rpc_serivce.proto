@@ -11,3 +11,4 @@ message QueryResponse{
 	string CodeMsg = 2;
 	string Result = 3;
 }
+

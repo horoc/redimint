@@ -14,13 +14,13 @@ func Login(c *gin.Context) {
 	request := &models.LoginRequest{}
 	ginMsg.DecodeRequestBody(request)
 
-	if request.Name != utils.Config.App.Name || request.Password != utils.Config.App.Auth {
+	if request.Name != utils.Config.App.AdminUser || request.Password != utils.Config.App.AdminPassword {
 		c.JSON(http.StatusOK, gin.H{
 			"code": code.CodeTypeIncorrectPassword,
 			"msg":  "Incorrect Password",
 		})
 	}
-	s, err := utils.GenerateToken(c.ClientIP())
+	s, err := utils.GenerateToken(c.ClientIP(), "admin", request.Name, request.Password)
 	if err != nil {
 		logger.Error(err)
 		c.JSON(http.StatusOK, gin.H{

@@ -1,36 +1,36 @@
 package core
 
-import "github.com/emirpasic/gods/sets/hashset"
-
 type Vote map[string]VoteCount
 
 type VoteCount struct {
-	N          int
-	AddressSet *hashset.Set
+	N             int                    `json:"n"`
+	VoteDetailMap map[string]interface{} `json:"vote_detail"`
 }
 
 func NewVote() Vote {
 	return make(map[string]VoteCount)
 }
 
-func (v Vote) addVote(data string, address string) {
-	if _, ok := v[data]; !ok {
-		v[data] = VoteCount{
-			N:          1,
-			AddressSet: hashset.New(address),
+func (v Vote) addVote(voteKey string, address string, detail interface{}) {
+	if _, ok := v[voteKey]; !ok {
+		detailMap := make(map[string]interface{})
+		detailMap[address] = detail
+		v[voteKey] = VoteCount{
+			N:             1,
+			VoteDetailMap: detailMap,
 		}
 	} else {
-		count := v[data]
-		if !count.AddressSet.Contains(address) {
-			count.AddressSet.Add(address)
+		count := v[voteKey]
+		if _, ok := count.VoteDetailMap[address]; !ok {
+			count.VoteDetailMap[address] = detail
 			count.N++
 		}
 	}
 }
 
-func (v Vote) getVoteNum(data string) int {
-	if _, ok := v[data]; !ok {
-		return v[data].N
+func (v Vote) getVoteNum(voteKey string) int {
+	if _, ok := v[voteKey]; !ok {
+		return v[voteKey].N
 	} else {
 		return 0
 	}
