@@ -60,7 +60,7 @@ func InitConfig() {
 	}
 	yamlFile, err := ioutil.ReadFile(abspath)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		return
 	}
 	yaml.Unmarshal(yamlFile, &Config)

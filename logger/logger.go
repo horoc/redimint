@@ -1,41 +1,43 @@
 package logger
 
 import (
+	"fmt"
 	"os"
+	"strings"
 )
 import "github.com/sirupsen/logrus"
 
-var logger = logrus.New()
-
-func Info(args ...interface{}) {
-	logger.Info(args...)
-}
-
-func Debug(args ...interface{}) {
-	logger.Debug(args...)
-}
-
-func Error(args ...interface{}) {
-	logger.Error(args...)
-}
-
-func Fatal(args ...interface{}) {
-	logger.Fatal(args...)
-}
+var Log = logrus.New()
 
 func InitLogger() {
-	customFormatter := new(logrus.TextFormatter)
-	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
-	customFormatter.FullTimestamp = true
-	customFormatter.DisableLevelTruncation = false
-
-	logger.SetFormatter(customFormatter)
+	customFormatter := new(Formatter)
+	Log.SetReportCaller(true)
+	Log.SetFormatter(customFormatter)
 
 	f, err := os.OpenFile("./log/server.log", os.O_WRONLY|os.O_CREATE, 0755)
 	if err != nil {
-		logger.Error(err)
+		Log.Error(err)
 		return
 	}
-	logger.SetOutput(f)
-	logger.SetLevel(logrus.InfoLevel)
+	Log.SetOutput(f)
+	Log.SetLevel(logrus.DebugLevel)
+}
+
+type Formatter struct{}
+
+func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
+	var out string
+	level := strings.ToUpper(entry.Level.String()[:4])
+	timeFmt := entry.Time.Format("2006-01-02 15:03:04.000")
+	if entry.HasCaller() {
+		if strings.Contains(entry.Caller.Function, "middleware") {
+			out = fmt.Sprintf("[%s][%s] | [GIN] |%s\n", level, timeFmt, entry.Message)
+			return []byte(out), nil
+		}
+		index := strings.LastIndex(entry.Caller.Function, "DecentralizedRedis")
+		out = fmt.Sprintf("[%s][%s] | [APP] | %s(%d) | %s\n", level, timeFmt, entry.Caller.Function[index+19:len(entry.Caller.Function)], entry.Caller.Line, entry.Message)
+	} else {
+		out = fmt.Sprintf("[%s][%s] | [APP] | %s\n", level, timeFmt, entry.Message)
+	}
+	return []byte(out), nil
 }

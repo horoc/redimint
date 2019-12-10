@@ -22,7 +22,7 @@ func Login(c *gin.Context) {
 	}
 	s, err := utils.GenerateToken(c.ClientIP(), "admin", request.Name, request.Password)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		c.JSON(http.StatusOK, gin.H{
 			"code": code.CodeTypeInternalError,
 			"msg":  err,

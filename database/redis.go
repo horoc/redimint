@@ -36,8 +36,8 @@ func InitRedis() {
 func NewRedisClient() *redis.Client {
 	client := redis.NewClient(&redis.Options{
 		Addr:     utils.Config.Redis.Url,
-		Password: utils.Config.Redis.Password, // no password set
-		DB:       utils.Config.Redis.Db,       // use default DB
+		Password: utils.Config.Redis.Password,
+		DB:       utils.Config.Redis.Db,
 	})
 	pong, err := client.Ping().Result()
 	fmt.Println(pong, err)
@@ -47,7 +47,7 @@ func NewRedisClient() *redis.Client {
 func StopRedis() {
 	status := Client.Shutdown()
 	if status.Err() != nil {
-		logger.Error(status.Err())
+		logger.Log.Error(status.Err())
 	}
 }
 
@@ -55,7 +55,7 @@ func StartRedisServer() {
 	cmd := exec.Command(utils.Config.Redis.RedisBin, utils.Config.Redis.ConfPath)
 	err := cmd.Run()
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 	}
 }
 
@@ -74,7 +74,7 @@ func ExecuteCommand(command string) (string, error) {
 	Client.Process(cmd)
 	s, err := cmd.Result()
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		return "", err
 	}
 	return fmt.Sprintf("%v", s), nil
