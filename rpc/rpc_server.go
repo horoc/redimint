@@ -32,11 +32,11 @@ func NewRpcServer(port string) *Server {
 func (s *Server) StartServer() {
 	lis, err := net.Listen("tcp", "127.0.0.1:"+s.port)
 	if err != nil {
-		logger.Error("failed to listen: %v", err)
+		logger.Log.Error("failed to listen: %v", err)
 		return
 	}
 	if err := s.server.Serve(lis); err != nil {
-		logger.Error("failed to serve: %v", err)
+		logger.Log.Error("failed to serve: %v", err)
 		return
 	}
 }

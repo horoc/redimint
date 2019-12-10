@@ -17,6 +17,8 @@ func ExecuteCommand(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
 	request := &models.ExecuteRequest{}
 	ginMsg.DecodeRequestBody(request)
+	logger.Log.Info("Get Request:" + string(utils.StructToJson(request)))
+
 	if strings.EqualFold(request.Mode, "async") {
 		res := core.AppService.ExecuteAsync(&models.CommandRequest{request.Cmd})
 		ginMsg.Response(http.StatusOK, res)
@@ -57,7 +59,7 @@ func RestoreLocalDatabase(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
 	err := core.AppService.RestoreLocalDatabase()
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 	}
 	ginMsg.Response(http.StatusOK, nil)
 }
@@ -69,7 +71,7 @@ func BenchMarkTest(c *gin.Context) {
 	fmt.Println(request)
 	mark, err := benchmark.NewBenchMark(request)
 	if err != nil {
-		logger.Info(err)
+		logger.Log.Error(err)
 		return
 	}
 	test := mark.StartTest()

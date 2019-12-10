@@ -9,7 +9,7 @@ import (
 	"github.com/chenzhou9513/DecentralizedRedis/network"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	abciserver "github.com/tendermint/tendermint/abci/server"
-	"github.com/tendermint/tendermint/libs/log"
+	tlog "github.com/tendermint/tendermint/libs/log"
 
 	"os"
 	"os/signal"
@@ -21,9 +21,9 @@ func Init() {
 	utils.InitConfig()
 
 	ipfs.InitIPFS()
-	logger.InitLogger()
 	core.InitClient()
 	core.InitService()
+	logger.InitLogger()
 	database.InitRedis()
 	core.InitLogStoreApplication()
 }
@@ -31,7 +31,7 @@ func Init() {
 func main() {
 
 	Init()
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+	logger := tlog.NewTMLogger(tlog.NewSyncWriter(os.Stdout))
 	server := abciserver.NewSocketServer(core.SocketAddr, core.LogStoreApp)
 	server.SetLogger(logger)
 	if err := server.Start(); err != nil {

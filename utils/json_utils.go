@@ -10,7 +10,7 @@ import (
 func StructToJson(v interface{}) []byte {
 	json, err := json.Marshal(v)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		return nil
 	}
 	return json
@@ -19,7 +19,7 @@ func StructToJson(v interface{}) []byte {
 func JsonToStruct(j []byte, s interface{}) {
 	err := json.Unmarshal(j, s)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		return
 	}
 }
@@ -31,7 +31,7 @@ func ByteToHex(b []byte) string{
 func HexToByte(s string) []byte{
 	bytes, err := hex.DecodeString(s)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		return nil
 	}
 	return bytes

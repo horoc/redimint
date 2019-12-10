@@ -10,7 +10,6 @@ import (
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
 	"path/filepath"
-	"strings"
 	"time"
 )
 
@@ -26,11 +25,10 @@ func InitKey() {
 func InitNodeKey() {
 	key, err := p2p.LoadNodeKey("./chain/config/node_key.json")
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		return
 	}
 	NodeKey = key
-	fmt.Println(strings.ToUpper(hex.EncodeToString(NodeKey.PrivKey.PubKey().Address())))
 }
 
 func InitValidatorKey() {
@@ -48,7 +46,7 @@ func GetNodeID() string {
 func NodeSign(msg []byte) []byte {
 	bytes, err := NodeKey.PrivKey.Sign(msg)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		return nil
 	}
 	return bytes
@@ -57,7 +55,7 @@ func NodeSign(msg []byte) []byte {
 func NodeStringSign(msg []byte) string {
 	bytes, err := NodeKey.PrivKey.Sign(msg)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		return ""
 	}
 	return SignToHex(bytes)
@@ -67,7 +65,7 @@ func NodeStringSign(msg []byte) string {
 func ValidatorSign(msg []byte) []byte {
 	bytes, err := ValidatorKey.PrivKey.Sign(msg)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		return nil
 	}
 	return bytes
@@ -76,7 +74,7 @@ func ValidatorSign(msg []byte) []byte {
 func ValidatorStringSign(msg []byte) string {
 	bytes, err := ValidatorKey.PrivKey.Sign(msg)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		return ""
 	}
 	return SignToHex(bytes)
@@ -91,7 +89,7 @@ func (n NodeKeySignMethod) Verify(signingString, signature string, key interface
 	k := key.(crypto.PrivKey)
 	if !k.PubKey().VerifyBytes([]byte(signingString), HexToByte(signature)) {
 		err := fmt.Errorf("JWT Signature invalid")
-		logger.Error(err)
+		logger.Log.Error(err)
 		return err
 	}
 	return nil
@@ -100,7 +98,7 @@ func (n NodeKeySignMethod) Sign(signingString string, key interface{}) (string, 
 	k := key.(crypto.PrivKey)
 	bytes, err := k.Sign([]byte(signingString))
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		return "", err
 	}
 	return SignToHex(bytes), nil

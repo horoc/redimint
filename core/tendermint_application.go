@@ -110,7 +110,7 @@ func (app *LogStoreApplication) InitChain(req abcitypes.RequestInitChain) abcity
 	for _, v := range req.Validators {
 		r := app.updateValidator(v)
 		if r.IsErr() {
-			logger.Error(r)
+			logger.Log.Error(r)
 		}
 	}
 	return abcitypes.ResponseInitChain{}
@@ -130,7 +130,7 @@ func (app *LogStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.
 		if app.IsPrivateCommand(commitBody) && strings.EqualFold(commitBody.Address, utils.ValidatorKey.Address.String()) {
 			res, err := database.ExecuteCommand(commitBody.Data.Operation)
 			if err != nil {
-				logger.Error(err)
+				logger.Log.Error(err)
 				panic(err)
 			}
 			return abcitypes.ResponseCheckTx{Code: code, GasWanted: 1, Info: info, Data: []byte("Result:" + res)}
@@ -175,7 +175,7 @@ func (app *LogStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcity
 		if app.initFlag || !strings.EqualFold(commitBody.Address, utils.ValidatorKey.Address.String()) {
 			_, err := database.ExecuteCommand(commitBody.Data.Operation)
 			if err != nil {
-				logger.Error(err)
+				logger.Log.Error(err)
 				panic(err)
 			}
 		}
@@ -184,7 +184,7 @@ func (app *LogStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcity
 		app.logSize.Add(1)
 		res, err := database.ExecuteCommand(commitBody.Data.Operation)
 		if err != nil {
-			logger.Error(err)
+			logger.Log.Error(err)
 			panic(err)
 		}
 		return abcitypes.ResponseDeliverTx{Code: c.CodeTypeOK, Data: []byte("Result:" + res)}
@@ -198,7 +198,6 @@ func (app *LogStoreApplication) Commit() abcitypes.ResponseCommit {
 
 //#################### EndBlock ####################
 func (app *LogStoreApplication) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
-	fmt.Println(string(utils.StructToJson(app.valUpdates)))
 	return abcitypes.ResponseEndBlock{ValidatorUpdates: app.valUpdates}
 }
 
@@ -247,7 +246,7 @@ func (app *LogStoreApplication) Query(reqQuery abcitypes.RequestQuery) (resQuery
 	err := app.db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(reqQuery.Data)
 		if err != nil && err != badger.ErrKeyNotFound {
-			logger.Error(err)
+			logger.Log.Error(err)
 			return err
 		}
 		if err == badger.ErrKeyNotFound {
@@ -262,7 +261,7 @@ func (app *LogStoreApplication) Query(reqQuery abcitypes.RequestQuery) (resQuery
 		return nil
 	})
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		panic(err)
 	}
 	return
@@ -315,7 +314,7 @@ func (LogStoreApplication) IsValidatorUpdateTx(tx []byte) bool {
 func (app *LogStoreApplication) IsPrivateCommand(commitBody models.TxCommitBody) bool {
 	key, err := database.GetKey(commitBody.Data.Operation)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		return false
 	}
 	split := strings.Split(key, PrivateSep)

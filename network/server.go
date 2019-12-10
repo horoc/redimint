@@ -52,7 +52,7 @@ func (server *Server) Start() {
 
 	fmt.Printf("Http Server will be started at :%s...\n", server.httpPort)
 	if err := server.httpServer.ListenAndServe(); err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		return
 	}
 }

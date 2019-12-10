@@ -91,12 +91,12 @@ func (s ApplicationService) ExecuteWithPrivateKey(request *models.CommandRequest
 
 	key, err := database.GetKey(request.Cmd)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 	}
 	key = utils.ValidatorKey.Address.String() + PrivateSep + key
 	cmd, err := database.ReplaceKey(request.Cmd, key)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 	}
 	request.Cmd = cmd
 
@@ -143,12 +143,12 @@ func (s ApplicationService) QueryPrivateDataWithAddress(request *models.CommandR
 
 	key, err := database.GetKey(request.Cmd)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 	}
 	key = utils.ValidatorKey.Address.String() + PrivateSep + key
 	cmd, err := database.ReplaceKey(request.Cmd, key)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 	}
 	request.Cmd = cmd
 	result, err := database.ExecuteCommand(request.Cmd)
@@ -302,7 +302,7 @@ func (s ApplicationService) UpdateValidators(update *models.ValidatorUpdateData)
 
 	commit, err := UpdateValidator(updateBody)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		return nil
 	}
 	vote := &VoteCount{}

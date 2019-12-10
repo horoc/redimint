@@ -28,7 +28,7 @@ func InitIPFS() {
 func AddFile(r io.Reader) string {
 	hash, err := ipfsClient.Add(r)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		panic(err)
 	}
 	return hash
@@ -37,7 +37,7 @@ func AddFile(r io.Reader) string {
 func UploadRDB() string {
 	file, err := os.Open(utils.Config.Redis.RDBPath)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		panic(err)
 	}
 	defer file.Close()
@@ -54,7 +54,7 @@ func UpdateRDBFile(hash string){
 func GetFile(hash string, path string) {
 	err := ipfsClient.Get(hash, path)
 	if err != nil {
-		logger.Error(err)
+		logger.Log.Error(err)
 		panic(err)
 	}
 }
