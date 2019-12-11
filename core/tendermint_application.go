@@ -10,6 +10,7 @@ import (
 	c "github.com/chenzhou9513/DecentralizedRedis/models/code"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	"github.com/dgraph-io/badger"
+	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/tendermint/tendermint/abci/example/code"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/ed25519"
@@ -18,6 +19,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type LogStoreApplication struct {
@@ -29,9 +31,19 @@ type LogStoreApplication struct {
 	valAddrVote            Vote
 	committedValidatorVote Vote
 
+	currentCommittedHeight int64
+	currentHeight          int64
+
+	privateTxSet *hashset.Set
+
 	logSize atomic.Int64
 
 	initFlag bool
+
+	pauseFlag bool
+	pauseChan chan bool
+	lock      sync.Mutex
+	wg        sync.WaitGroup
 }
 
 var _ abcitypes.Application = (*LogStoreApplication)(nil)
@@ -55,6 +67,9 @@ func InitLogStoreApplication() {
 		valAddrVote:            NewVote(),
 		committedValidatorVote: NewVote(),
 		initFlag:               true,
+		currentCommittedHeight: 1,
+		pauseChan:              make(chan bool),
+		privateTxSet:           hashset.New(),
 	}
 }
 
@@ -118,6 +133,11 @@ func (app *LogStoreApplication) InitChain(req abcitypes.RequestInitChain) abcity
 
 //#################### CheckTx ####################
 func (app *LogStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
+
+	if app.pauseFlag == true {
+		app.wg.Wait()
+	}
+
 	app.initFlag = false
 	code, info := app.isValid(req.Tx)
 	if code != c.CodeTypeOK {
@@ -133,14 +153,23 @@ func (app *LogStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.
 				logger.Log.Error(err)
 				panic(err)
 			}
+			app.privateTxSet.Add(commitBody.Data.Sequence)
 			return abcitypes.ResponseCheckTx{Code: code, GasWanted: 1, Info: info, Data: []byte("Result:" + res)}
 		}
 	}
+
 	return abcitypes.ResponseCheckTx{Code: code, GasWanted: 1, Info: info}
 }
 
 //#################### BeginBlock ####################
 func (app *LogStoreApplication) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.ResponseBeginBlock {
+
+	app.currentHeight = req.Header.Height
+
+	if app.pauseFlag == true {
+		app.wg.Wait()
+	}
+
 	//reset valUpdates
 	app.valUpdates = make([]abcitypes.ValidatorUpdate, 0)
 	for _, ev := range req.ByzantineValidators {
@@ -173,10 +202,14 @@ func (app *LogStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcity
 	utils.JsonToStruct(req.Tx, &commitBody)
 	if app.IsPrivateCommand(commitBody) {
 		if app.initFlag || !strings.EqualFold(commitBody.Address, utils.ValidatorKey.Address.String()) {
-			_, err := database.ExecuteCommand(commitBody.Data.Operation)
-			if err != nil {
-				logger.Log.Error(err)
-				panic(err)
+			if !app.privateTxSet.Contains(commitBody.Data.Sequence) {
+				_, err := database.ExecuteCommand(commitBody.Data.Operation)
+				if err != nil {
+					logger.Log.Error(err)
+					panic(err)
+				}
+			} else {
+				app.privateTxSet.Remove(commitBody.Data.Sequence)
 			}
 		}
 		return abcitypes.ResponseDeliverTx{Code: c.CodeTypeOK, Info: c.Info(c.CodeTypeOK)}
@@ -198,6 +231,7 @@ func (app *LogStoreApplication) Commit() abcitypes.ResponseCommit {
 
 //#################### EndBlock ####################
 func (app *LogStoreApplication) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
+	app.currentCommittedHeight = app.currentHeight
 	return abcitypes.ResponseEndBlock{ValidatorUpdates: app.valUpdates}
 }
 
@@ -299,6 +333,24 @@ func (app *LogStoreApplication) updateValidator(v abcitypes.ValidatorUpdate) abc
 	app.valUpdates = append(app.valUpdates, v)
 
 	return abcitypes.ResponseDeliverTx{Code: 0}
+}
+
+func (app *LogStoreApplication) GetCurrentHeight() int64 {
+	return app.currentCommittedHeight
+}
+
+func (app *LogStoreApplication) Pause() {
+	app.lock.Lock()
+	app.pauseFlag = true
+	app.wg.Add(1)
+	app.lock.Unlock()
+}
+
+func (app *LogStoreApplication) Continue() {
+	app.lock.Lock()
+	app.pauseFlag = false
+	app.wg.Done()
+	app.lock.Unlock()
 }
 
 func (LogStoreApplication) IsValidatorUpdateTx(tx []byte) bool {
