@@ -18,7 +18,6 @@ func Flutter(str string) string {
 
 func Log() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 开始时间
 		start := time.Now()
 
 		method := c.Request.Method
