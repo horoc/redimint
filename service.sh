@@ -47,9 +47,6 @@ function stopRedis(){
 function startRedis(){
     nohup redis-server ./conf/redis/redis.conf > ./log/redis.log 2>&1 &
 }
-function testTPS(){
-    curl -s 'http://127.0.0.1:30001/test_tps'
-}
 
 case "$1" in
   newDockernode)

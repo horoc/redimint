@@ -7,10 +7,9 @@ import (
 	"github.com/chenzhou9513/DecentralizedRedis/routers"
 	"github.com/chenzhou9513/DecentralizedRedis/rpc"
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 var AppServer *Server
@@ -48,13 +47,13 @@ func NewServer() *Server {
 
 func (server *Server) Start() {
 
-	logger.Log.Infof("Rpc Server will be started at :%s...\n", server.rpcPort)
+	logger.Log.Infof("Rpc Server will be started at :%s...", server.rpcPort)
 	go server.rpcServer.StartServer()
 
 	logger.Log.Infof("Start Command Log Writer ...")
 	go core.AppService.StartCommandLogWriter()
 
-	logger.Log.Infof("Http Server will be started at :%s...\n", server.httpPort)
+	logger.Log.Infof("Http Server will be started at :%s...", server.httpPort)
 	if err := server.httpServer.ListenAndServe(); err != nil {
 		logger.Log.Error(err)
 		return

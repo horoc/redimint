@@ -11,6 +11,7 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -346,6 +347,7 @@ func (s ApplicationService) UpdateValidators(update *models.ValidatorUpdateData)
 }
 
 func (s ApplicationService) StartCommandLogWriter() {
+	var lock sync.Mutex
 	out, err := SubScribeEvent("NewBlock")
 	if err != nil {
 		logger.Log.Errorf("Subscribe event NewBlock failed : ", err)
@@ -355,11 +357,25 @@ func (s ApplicationService) StartCommandLogWriter() {
 	for {
 		select {
 		case resultEvent := <-out:
-			logger.Log.Info(resultEvent.Data.(types.EventDataNewBlock))
+			block := resultEvent.Data.(types.EventDataNewBlock).Block
+			strList := s.ConvertTransactionsToLogString(block.Txs, block.Height, block.Time.String())
+			lock.Lock()
+			utils.AppendToDBLogFile(strList)
+			lock.Unlock()
 		default:
 			time.Sleep(time.Nanosecond * 1e3)
 		}
 	}
+}
+
+func (s ApplicationService) ConvertTransactionsToLogString(txs types.Txs, h int64, time string) []string {
+	strList := make([]string, 0)
+	for _, v := range txs {
+		data := &models.TxCommitBody{}
+		utils.JsonToStruct(v, data)
+		strList = append(strList, fmt.Sprintf("%s | %s | %s | %s | %d | %s ", data.Data.Operation, data.Address, data.Signature, data.Data.Sequence, h, time))
+	}
+	return strList
 }
 
 func (s ApplicationService) ConvertBlockID(b *types.BlockID) *models.BlockID {
