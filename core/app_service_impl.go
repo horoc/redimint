@@ -310,6 +310,23 @@ func (s ApplicationService) UpdateValidators(update *models.ValidatorUpdateData)
 	return vote
 }
 
+func (s ApplicationService) StartCommandLogWriter() {
+	out, err := SubScribeEvent("NewBlock")
+	if err != nil {
+		logger.Log.Errorf("Subscribe event NewBlock failed : ", err)
+	}
+	logger.Log.Info("Subscribe tendermint event : NewBlock")
+
+	for {
+		select {
+		case resultEvent := <-out:
+			logger.Log.Info(resultEvent.Data.(types.EventDataNewBlock))
+		default:
+			time.Sleep(time.Nanosecond * 1e3)
+		}
+	}
+}
+
 func (s ApplicationService) ConvertBlockID(b *types.BlockID) *models.BlockID {
 	blockID := models.BlockID{}
 	blockID.Hash = utils.ByteToHex(b.Hash)

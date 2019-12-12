@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/models"
@@ -133,4 +134,27 @@ func UpdateValidator(update *models.ValidatorUpdateBody) (*ctypes.ResultBroadcas
 		return nil, err
 	}
 	return resultBroadcastTxCommit, nil
+}
+
+func SubScribeEvent(event string) (out <-chan ctypes.ResultEvent, err error) {
+	eventQuery := "tm.event= '" + event + " '"
+	tendermintHttpClient.Start()
+	out, err = tendermintHttpClient.WSEvents.Subscribe(context.Background(), "", eventQuery)
+	if err != nil {
+		err = fmt.Errorf("SubScribeEvent error : %s, %s", eventQuery, err)
+		logger.Log.Error(err)
+		return nil, err
+	}
+	return out, nil
+}
+
+func UnSubScribeEvent(event string) error {
+	eventQuery := "tm.event='" + event + "'"
+	err := tendermintHttpClient.WSEvents.Unsubscribe(context.Background(), "", eventQuery)
+	if err != nil {
+		err = fmt.Errorf("UnSubScribeEvent error : %s, %s", eventQuery, err)
+		logger.Log.Error(err)
+		return err
+	}
+	return nil
 }

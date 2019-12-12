@@ -39,6 +39,7 @@ func (s *Server) StartServer() {
 		logger.Log.Error("failed to serve: %v", err)
 		return
 	}
+
 }
 
 type DBService struct {

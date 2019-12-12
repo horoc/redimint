@@ -41,7 +41,6 @@ type LogStoreApplication struct {
 	initFlag bool
 
 	pauseFlag bool
-	pauseChan chan bool
 	lock      sync.Mutex
 	wg        sync.WaitGroup
 }
@@ -68,7 +67,6 @@ func InitLogStoreApplication() {
 		committedValidatorVote: NewVote(),
 		initFlag:               true,
 		currentCommittedHeight: 1,
-		pauseChan:              make(chan bool),
 		privateTxSet:           hashset.New(),
 	}
 }

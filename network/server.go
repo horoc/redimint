@@ -2,6 +2,7 @@ package network
 
 import (
 	"fmt"
+	"github.com/chenzhou9513/DecentralizedRedis/core"
 	"github.com/chenzhou9513/DecentralizedRedis/logger"
 	"github.com/chenzhou9513/DecentralizedRedis/routers"
 	"github.com/chenzhou9513/DecentralizedRedis/rpc"
@@ -47,13 +48,16 @@ func NewServer() *Server {
 
 func (server *Server) Start() {
 
-	fmt.Printf("Rpc Server will be started at :%s...\n", server.rpcPort)
+	logger.Log.Infof("Rpc Server will be started at :%s...\n", server.rpcPort)
 	go server.rpcServer.StartServer()
 
-	fmt.Printf("Http Server will be started at :%s...\n", server.httpPort)
+	logger.Log.Infof("Start Command Log Writer ...")
+	go core.AppService.StartCommandLogWriter()
+
+	logger.Log.Infof("Http Server will be started at :%s...\n", server.httpPort)
 	if err := server.httpServer.ListenAndServe(); err != nil {
 		logger.Log.Error(err)
 		return
 	}
-}
 
+}
