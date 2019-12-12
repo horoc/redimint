@@ -17,7 +17,6 @@ func ExecuteCommand(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
 	request := &models.ExecuteRequest{}
 	ginMsg.DecodeRequestBody(request)
-	logger.Log.Info("Get Request:" + string(utils.StructToJson(request)))
 
 	if strings.EqualFold(request.Mode, "async") {
 		res := core.AppService.ExecuteAsync(&models.CommandRequest{request.Cmd})
