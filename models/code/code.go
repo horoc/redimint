@@ -18,6 +18,8 @@ const (
 	CodeTypeTokenInvalidError   = 14
 	CodeTypeIncorrectPassword   = 15
 	CodeTypeInternalError       = 16
+	CodeTypeGetChainGenesisError  = 17
+
 )
 
 func InfoWithDetail(p int, msg string) string {

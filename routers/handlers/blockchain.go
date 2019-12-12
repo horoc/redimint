@@ -52,6 +52,12 @@ func GetVotingValidator(c *gin.Context) {
 	ginMsg.Response(http.StatusOK, res)
 }
 
+func GetGenesis(c *gin.Context) {
+	ginMsg := models.GinMsg{C: c}
+	res := core.AppService.GetGenesis()
+	ginMsg.Response(http.StatusOK, res)
+}
+
 func UpdateValidators(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
 	request := &models.ValidatorUpdateData{}

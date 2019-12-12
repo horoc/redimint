@@ -19,6 +19,7 @@ type Service interface {
 
 	GetChainState() *models.ChainState
 	GetChainInfo(min int, max int) *models.ChainInfo
+	GetGenesis() *models.Genesis
 
 	StartCommandLogWriter()
 }

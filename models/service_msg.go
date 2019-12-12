@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/types"
 	"github.com/tendermint/tendermint/version"
@@ -69,16 +70,15 @@ type ProofDetail struct {
 }
 
 type TransactionCommittedList struct {
-	Total 		int64 `json:"total"`
-	Data        []*CommittedTx `json:"data"`
+	Total int64          `json:"total"`
+	Data  []*CommittedTx `json:"data"`
 }
 type CommittedTx struct {
 	Data      *TxCommitData `json:"data"`
-	Signature string `json:"signature"`
-	Address   string `json:"address"`
-	Height 	  int64  `json:"height"`
+	Signature string        `json:"signature"`
+	Address   string        `json:"address"`
+	Height    int64         `json:"height"`
 }
-
 
 //Block
 type BlockMeta struct {
@@ -189,6 +189,50 @@ type ChainState struct {
 	NodeInfo      NodeInfo      `json:"node_info"`
 	SyncInfo      SyncInfo      `json:"sync_info"`
 	ValidatorInfo ValidatorInfo `json:"validator_info"`
+}
+
+type GenesisValidator struct {
+	Address HexBytes `json:"address"`
+	PubKey  HexBytes `json:"pub_key"`
+	Power   int64    `json:"power"`
+	Name    string   `json:"name"`
+}
+
+// GenesisDoc defines the initial conditions for a tendermint blockchain, in particular its validator set.
+type Genesis struct {
+	Code            uint32             `json:"code"`
+	CodeMsg         string             `json:"code_info"`
+	GenesisTime     time.Time          `json:"genesis_time"`
+	ChainID         string             `json:"chain_id"`
+	ConsensusParams *ConsensusParams   `json:"consensus_params,omitempty"`
+	Validators      []GenesisValidator `json:"validators,omitempty"`
+	AppHash         HexBytes           `json:"app_hash"`
+	AppState        json.RawMessage    `json:"app_state,omitempty"`
+}
+
+type ConsensusParams struct {
+	Block     BlockParams     `json:"block"`
+	Evidence  EvidenceParams  `json:"evidence"`
+	Validator ValidatorParams `json:"validator"`
+}
+
+type BlockParams struct {
+	MaxBytes int64 `json:"max_bytes"`
+	MaxGas   int64 `json:"max_gas"`
+	// Minimum time increment between consecutive blocks (in milliseconds)
+	// Not exposed to the application.
+	TimeIotaMs int64 `json:"time_iota_ms"`
+}
+
+// EvidenceParams determine how we handle evidence of malfeasance.
+type EvidenceParams struct {
+	MaxAge int64 `json:"max_age"` // only accept new evidence more recent than this
+}
+
+// ValidatorParams restrict the public key types validators can use.
+// NOTE: uses ABCI pubkey naming, not Amino names.
+type ValidatorParams struct {
+	PubKeyTypes []string `json:"pub_key_types"`
 }
 
 //bench mark
