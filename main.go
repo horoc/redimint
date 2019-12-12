@@ -18,6 +18,7 @@ import (
 
 func Init() {
 	utils.InitKey()
+	utils.InitFiles()
 	utils.InitConfig()
 
 	ipfs.InitIPFS()

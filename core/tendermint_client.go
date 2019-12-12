@@ -8,6 +8,7 @@ import (
 	"github.com/chenzhou9513/DecentralizedRedis/utils"
 	c "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+
 	"github.com/tendermint/tendermint/types"
 	"strconv"
 	"time"
@@ -137,15 +138,18 @@ func UpdateValidator(update *models.ValidatorUpdateBody) (*ctypes.ResultBroadcas
 }
 
 func SubScribeEvent(event string) (out <-chan ctypes.ResultEvent, err error) {
-	eventQuery := "tm.event= '" + event + " '"
-	tendermintHttpClient.Start()
-	out, err = tendermintHttpClient.WSEvents.Subscribe(context.Background(), "", eventQuery)
+
+	for !tendermintHttpClient.IsRunning() {
+		time.Sleep(time.Second)
+		tendermintHttpClient.Start()
+	}
+	eventQuery := "tm.event= '" + event + "'"
+	out, err = tendermintHttpClient.Subscribe(context.Background(), "", eventQuery)
 	if err != nil {
 		err = fmt.Errorf("SubScribeEvent error : %s, %s", eventQuery, err)
 		logger.Log.Error(err)
 		return nil, err
 	}
-	tendermintHttpClient.Genesis()
 	return out, nil
 }
 
