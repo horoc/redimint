@@ -145,6 +145,7 @@ func SubScribeEvent(event string) (out <-chan ctypes.ResultEvent, err error) {
 		logger.Log.Error(err)
 		return nil, err
 	}
+	tendermintHttpClient.Genesis()
 	return out, nil
 }
 
@@ -157,4 +158,14 @@ func UnSubScribeEvent(event string) error {
 		return err
 	}
 	return nil
+}
+
+func GetGenesis() (*ctypes.ResultGenesis, error) {
+	resultGenesis, err := tendermintHttpClient.Genesis()
+	if err != nil {
+		err = fmt.Errorf("GetGenesis error : % %s", err)
+		logger.Log.Error(err)
+		return nil, err
+	}
+	return resultGenesis, nil
 }

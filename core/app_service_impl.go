@@ -285,6 +285,41 @@ func (s ApplicationService) GetChainState() *models.ChainState {
 	return state
 }
 
+func (s ApplicationService) GetGenesis() *models.Genesis {
+	resultGenesis, err := GetGenesis()
+	if err != nil {
+		return &models.Genesis{
+			Code:    code.CodeTypeGetChainGenesisError,
+			CodeMsg: err.Error(),
+		}
+	}
+
+	o := resultGenesis.Genesis
+	consensusParams := &models.ConsensusParams{}
+	utils.JsonToStruct(utils.StructToJson(o.ConsensusParams), consensusParams)
+
+	validators := make([]models.GenesisValidator, 0)
+	for _, v := range o.Validators {
+		validators = append(validators, models.GenesisValidator{
+			Address: v.Address.Bytes(),
+			PubKey:  v.PubKey.Bytes(),
+			Power:   v.Power,
+			Name:    v.Name,
+		})
+	}
+
+	return &models.Genesis{
+		Code:            code.CodeTypeOK,
+		CodeMsg:         code.Info(code.CodeTypeOK),
+		GenesisTime:     o.GenesisTime,
+		ChainID:         o.ChainID,
+		ConsensusParams: consensusParams,
+		Validators:      validators,
+		AppHash:         []byte(o.AppHash),
+		AppState:        o.AppState,
+	}
+}
+
 func (s ApplicationService) QueryVotingValidators() *Vote {
 	return LogStoreApp.QueryVotingValidators()
 }
