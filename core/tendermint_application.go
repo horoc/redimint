@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/chenzhou9513/DecentralizedRedis/database"
-	"github.com/chenzhou9513/DecentralizedRedis/logger"
-	"github.com/chenzhou9513/DecentralizedRedis/models"
-	c "github.com/chenzhou9513/DecentralizedRedis/models/code"
-	"github.com/chenzhou9513/DecentralizedRedis/utils"
+	"github.com/chenzhou9513/redimint/database"
+	"github.com/chenzhou9513/redimint/logger"
+	"github.com/chenzhou9513/redimint/models"
+	c "github.com/chenzhou9513/redimint/models/code"
+	"github.com/chenzhou9513/redimint/utils"
 	"github.com/dgraph-io/badger"
 	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/tendermint/tendermint/abci/example/code"
@@ -105,16 +105,16 @@ func (app *LogStoreApplication) isValid(tx []byte) (uint32, string) {
 	}
 
 	if _, ok := app.valAddrToPubKeyMap[address]; !ok {
-		return c.CodeTypeInvalidValidator, c.Info(c.CodeTypeInvalidValidator)
+		return c.CodeTypeInvalidValidator, c.CodeTypeInvalidValidatorMsg
 	}
 
 	pubkey := ed25519.PubKeyEd25519{}
 	copy(pubkey[:], app.valAddrToPubKeyMap[address].Data)
 
 	if pubkey.VerifyBytes(data, utils.HexToByte(sign)) != true {
-		return c.CodeTypeInvalidSign, c.Info(c.CodeTypeInvalidSign)
+		return c.CodeTypeInvalidSign, c.CodeTypeInvalidSignMsg
 	}
-	return c.CodeTypeOK, c.Info(c.CodeTypeOK)
+	return c.CodeTypeOK, c.CodeTypeOKMsg
 }
 
 //#################### InitChain ####################
@@ -209,7 +209,7 @@ func (app *LogStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcity
 				app.privateTxSet.Remove(commitBody.Data.Sequence)
 			}
 		}
-		return abcitypes.ResponseDeliverTx{Code: c.CodeTypeOK, Info: c.Info(c.CodeTypeOK)}
+		return abcitypes.ResponseDeliverTx{Code: c.CodeTypeOK, Info: c.CodeTypeOKMsg}
 	} else {
 		app.logSize.Add(1)
 		res, err := database.ExecuteCommand(commitBody.Data.Operation)
@@ -243,7 +243,7 @@ func (app *LogStoreApplication) execValidatorTx(tx []byte) abcitypes.ResponseDel
 	if err != nil {
 		return abcitypes.ResponseDeliverTx{
 			Code: c.CodeTypeEncodingError,
-			Log:  c.Info(c.CodeTypeEncodingError)}
+			Log:  c.CodeTypeEncodingErrorMsg}
 	}
 
 	// decode the power
@@ -251,7 +251,7 @@ func (app *LogStoreApplication) execValidatorTx(tx []byte) abcitypes.ResponseDel
 	if err != nil {
 		return abcitypes.ResponseDeliverTx{
 			Code: c.CodeTypeEncodingError,
-			Log:  c.Info(c.CodeTypeEncodingError)}
+			Log:  c.CodeTypeEncodingErrorMsg}
 	}
 
 	//publicKey:power
@@ -310,7 +310,7 @@ func (app *LogStoreApplication) updateValidator(v abcitypes.ValidatorUpdate) abc
 			pubStr := base64.StdEncoding.EncodeToString(v.PubKey.Data)
 			return abcitypes.ResponseDeliverTx{
 				Code: c.CodeTypeEncodingError,
-				Log:  c.InfoWithDetail(c.CodeTypeEncodingError, pubStr)}
+				Log:  c.CodeTypeEncodingErrorMsg + " : " + pubStr}
 		}
 		app.deleteBadgerKey([]byte("val:" + string(v.PubKey.Data)))
 		delete(app.valAddrToPubKeyMap, pubkey.Address().String())
@@ -320,7 +320,7 @@ func (app *LogStoreApplication) updateValidator(v abcitypes.ValidatorUpdate) abc
 		if err := abcitypes.WriteMessage(&v, value); err != nil {
 			return abcitypes.ResponseDeliverTx{
 				Code: c.CodeTypeEncodingError,
-				Log:  c.InfoWithDetail(c.CodeTypeEncodingError, err.Error())}
+				Log:  c.CodeTypeEncodingErrorMsg + " : " + err.Error()}
 		}
 		app.updateBadgerVal([]byte("val:"+string(v.PubKey.Data)), value.Bytes())
 		app.valAddrToPubKeyMap[pubkey.Address().String()] = v.PubKey

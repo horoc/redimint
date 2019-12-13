@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"github.com/chenzhou9513/DecentralizedRedis/logger"
+	"github.com/chenzhou9513/redimint/logger"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/p2p"

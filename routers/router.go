@@ -1,8 +1,8 @@
 package routers
 
 import (
-	"github.com/chenzhou9513/DecentralizedRedis/routers/handlers"
-	"github.com/chenzhou9513/DecentralizedRedis/routers/middleware"
+	"github.com/chenzhou9513/redimint/routers/handlers"
+	"github.com/chenzhou9513/redimint/routers/middleware"
 	"github.com/gin-gonic/gin"
 )
 

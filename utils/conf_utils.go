@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/chenzhou9513/DecentralizedRedis/logger"
+	"github.com/chenzhou9513/redimint/logger"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"path/filepath"

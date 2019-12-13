@@ -14,8 +14,6 @@ type CommandRequest struct {
 }
 
 type ExecuteResponse struct {
-	Code          uint32 `json:"code"`
-	CodeMsg       string `json:"code_info"`
 	Cmd           string `json:"command"`
 	ExecuteResult string `json:"execute_result"`
 	Signature     string `json:"signature"`
@@ -26,8 +24,6 @@ type ExecuteResponse struct {
 }
 
 type ExecuteAsyncResponse struct {
-	Code      uint32 `json:"code"`
-	CodeMsg   string `json:"code_info"`
 	Cmd       string `json:"command"`
 	Signature string `json:"signature"`
 	Sequence  string `json:"sequence"`
@@ -36,8 +32,6 @@ type ExecuteAsyncResponse struct {
 }
 
 type QueryResponse struct {
-	Code    uint32 `json:"code"`
-	CodeMsg string `json:"code_info"`
 	Result  string `json:"result"`
 }
 
@@ -63,10 +57,10 @@ type TxProof struct {
 }
 
 type ProofDetail struct {
-	Total    int      `json:"total"`     // Total number of items.
-	Index    int      `json:"index"`     // Index of item to prove.
-	LeafHash string   `json:"leaf_hash"` // Hash of item value.
-	Aunts    []string `json:"aunts"`     // Hashes from leaf's sibling to a root's child.
+	Total    int      `json:"total"`
+	Index    int      `json:"index"`
+	LeafHash string   `json:"leaf_hash"`
+	Aunts    []string `json:"aunts"`
 }
 
 type TransactionCommittedList struct {
@@ -105,7 +99,6 @@ type PartSetHeader struct {
 }
 
 type Header struct {
-	// basic block info
 	Version  version.Consensus `json:"version"`
 	ChainID  string            `json:"chain_id"`
 	Height   int64             `json:"height"`
@@ -113,31 +106,24 @@ type Header struct {
 	NumTxs   int64             `json:"num_txs"`
 	TotalTxs int64             `json:"total_txs"`
 
-	// prev block info
 	LastBlockID BlockID `json:"last_block_id"`
 
-	// hashes of block data
-	LastCommitHash string `json:"last_commit_hash"` // commit from validators from the last block
-	DataHash       string `json:"data_hash"`        // transactions
+	LastCommitHash string `json:"last_commit_hash"`
+	DataHash       string `json:"data_hash"`
 
-	// hashes from the app output from the prev block
-	ValidatorsHash     string `json:"validators_hash"`      // validators for the current block
-	NextValidatorsHash string `json:"next_validators_hash"` // validators for the next block
-	ConsensusHash      string `json:"consensus_hash"`       // consensus params for current block
-	AppHash            string `json:"app_hash"`             // state after txs from the previous block
-	LastResultsHash    string `json:"last_results_hash"`    // root hash of all results from the txs from the previous block
+	ValidatorsHash     string `json:"validators_hash"`
+	NextValidatorsHash string `json:"next_validators_hash"`
+	ConsensusHash      string `json:"consensus_hash"`
+	AppHash            string `json:"app_hash"`
+	LastResultsHash    string `json:"last_results_hash"`
 
-	// consensus info
-	EvidenceHash    string `json:"evidence_hash"`    // evidence included in the block
-	ProposerAddress string `json:"proposer_address"` // original proposer of the block
+	EvidenceHash    string `json:"evidence_hash"`
+	ProposerAddress string `json:"proposer_address"`
 }
 
 type Data struct {
-	// Txs that will be applied by state @ block.Height+1.
-	// NOTE: not all txs here are valid.  We're just agreeing on the order first.
-	// This means that block.AppHash does not include these txs.
-	Txs []string `json:"txs"`
 
+	Txs []string `json:"txs"`
 	Hash string `json:"hash"`
 }
 
@@ -153,20 +139,18 @@ type CommitSig struct {
 
 //chain
 type ChainInfo struct {
-	Code       uint32       `json:"code"`
-	CodeMsg    string       `json:"code_info"`
 	LastHeight int64        `json:"last_height"`
 	BlockMetas []*BlockMeta `json:"block_metas"`
 }
 
 type NodeInfo struct {
 	ProtocolVersion p2p.ProtocolVersion `json:"protocol_version"`
-	ID              p2p.ID              `json:"id"`          // authenticated identifier
-	ListenAddr      string              `json:"listen_addr"` // accepting incoming
-	Network         string              `json:"network"`     // network/chain ID
-	Version         string              `json:"version"`     // major.minor.revision
-	Channels        HexBytes            `json:"channels"`    // channels this node knows about¬
-	Moniker         string              `json:"moniker"`     // arbitrary moniker
+	ID              p2p.ID              `json:"id"`
+	ListenAddr      string              `json:"listen_addr"`
+	Network         string              `json:"network"`
+	Version         string              `json:"version"`
+	Channels        HexBytes            `json:"channels"`
+	Moniker         string              `json:"moniker"`
 }
 
 type SyncInfo struct {
@@ -184,8 +168,6 @@ type ValidatorInfo struct {
 }
 
 type ChainState struct {
-	Code          uint32        `json:"code"`
-	CodeMsg       string        `json:"code_info"`
 	NodeInfo      NodeInfo      `json:"node_info"`
 	SyncInfo      SyncInfo      `json:"sync_info"`
 	ValidatorInfo ValidatorInfo `json:"validator_info"`
@@ -198,10 +180,7 @@ type GenesisValidator struct {
 	Name    string   `json:"name"`
 }
 
-// GenesisDoc defines the initial conditions for a tendermint blockchain, in particular its validator set.
 type Genesis struct {
-	Code            uint32             `json:"code"`
-	CodeMsg         string             `json:"code_info"`
 	GenesisTime     time.Time          `json:"genesis_time"`
 	ChainID         string             `json:"chain_id"`
 	ConsensusParams *ConsensusParams   `json:"consensus_params,omitempty"`
@@ -219,18 +198,14 @@ type ConsensusParams struct {
 type BlockParams struct {
 	MaxBytes int64 `json:"max_bytes"`
 	MaxGas   int64 `json:"max_gas"`
-	// Minimum time increment between consecutive blocks (in milliseconds)
-	// Not exposed to the application.
 	TimeIotaMs int64 `json:"time_iota_ms"`
 }
 
-// EvidenceParams determine how we handle evidence of malfeasance.
 type EvidenceParams struct {
-	MaxAge int64 `json:"max_age"` // only accept new evidence more recent than this
+	MaxAge int64 `json:"max_age"`
 }
 
-// ValidatorParams restrict the public key types validators can use.
-// NOTE: uses ABCI pubkey naming, not Amino names.
+
 type ValidatorParams struct {
 	PubKeyTypes []string `json:"pub_key_types"`
 }

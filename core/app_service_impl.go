@@ -2,11 +2,10 @@ package core
 
 import (
 	"fmt"
-	"github.com/chenzhou9513/DecentralizedRedis/database"
-	"github.com/chenzhou9513/DecentralizedRedis/logger"
-	"github.com/chenzhou9513/DecentralizedRedis/models"
-	"github.com/chenzhou9513/DecentralizedRedis/models/code"
-	"github.com/chenzhou9513/DecentralizedRedis/utils"
+	"github.com/chenzhou9513/redimint/database"
+	"github.com/chenzhou9513/redimint/logger"
+	"github.com/chenzhou9513/redimint/models"
+	"github.com/chenzhou9513/redimint/utils"
 	uuid "github.com/satori/go.uuid"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
@@ -44,51 +43,42 @@ func (s ApplicationService) MakeTxCommitBody(request *models.CommandRequest) *mo
 	return op
 }
 
-func (s ApplicationService) Execute(request *models.CommandRequest) *models.ExecuteResponse {
+func (s ApplicationService) Execute(request *models.CommandRequest) (*models.ExecuteResponse, error) {
 	op := s.MakeTxCommitBody(request)
 	timestamp := time.Now().UnixNano() / 1e6
 	commitMsg, err := BroadcastTxCommit(op)
 	if err != nil {
-		return &models.ExecuteResponse{
-			Code:    code.CodeTypeTxExeCommitError,
-			CodeMsg: err.Error(),
-		}
+		return nil, err
 	}
-	return &models.ExecuteResponse{Code: code.CodeTypeOK,
-		CodeMsg:       code.Info(code.CodeTypeOK),
+	return &models.ExecuteResponse{
 		Cmd:           request.Cmd,
 		ExecuteResult: string(commitMsg.DeliverTx.Data),
 		Signature:     op.Signature,
 		Sequence:      op.Data.Sequence,
 		TimeStamp:     strconv.FormatInt(timestamp, 10),
 		Hash:          utils.ByteToHex(commitMsg.Hash),
-		Height:        commitMsg.Height}
+		Height:        commitMsg.Height}, nil
 }
 
-func (s ApplicationService) ExecuteAsync(request *models.CommandRequest) *models.ExecuteAsyncResponse {
+func (s ApplicationService) ExecuteAsync(request *models.CommandRequest) (*models.ExecuteAsyncResponse, error) {
 	op := s.MakeTxCommitBody(request)
 	timestamp := time.Now().UnixNano() / 1e6
 
 	sync, err := BroadcastTxSync(op)
 	if err != nil {
-		return &models.ExecuteAsyncResponse{
-			Code:    code.CodeTypeTxExeSyncError,
-			CodeMsg: err.Error(),
-		}
+		return nil, err
 	}
 
 	return &models.ExecuteAsyncResponse{
-		Code:      code.CodeTypeOK,
-		CodeMsg:   code.Info(code.CodeTypeOK),
 		Cmd:       op.Data.Operation,
 		Signature: op.Signature,
 		Sequence:  op.Data.Sequence,
 		TimeStamp: strconv.FormatInt(timestamp, 10),
 		Hash:      utils.ByteToHex(sync.Hash),
-	}
+	}, nil
 }
 
-func (s ApplicationService) ExecuteWithPrivateKey(request *models.CommandRequest) *models.ExecuteResponse {
+func (s ApplicationService) ExecuteWithPrivateKey(request *models.CommandRequest) (*models.ExecuteResponse, error) {
 
 	key, err := database.GetKey(request.Cmd)
 	if err != nil {
@@ -106,65 +96,46 @@ func (s ApplicationService) ExecuteWithPrivateKey(request *models.CommandRequest
 
 	sync, err := BroadcastTxSync(op)
 	if err != nil {
-		return &models.ExecuteResponse{
-			Code:    code.CodeTypeTxExeSyncError,
-			CodeMsg: err.Error(),
-		}
+		return nil, err
 	}
 
 	return &models.ExecuteResponse{
-		Code:          code.CodeTypeOK,
-		CodeMsg:       code.Info(code.CodeTypeOK),
 		Cmd:           op.Data.Operation,
 		ExecuteResult: string(sync.Data),
 		Signature:     op.Signature,
 		Sequence:      op.Data.Sequence,
 		TimeStamp:     strconv.FormatInt(timestamp, 10),
 		Hash:          utils.ByteToHex(sync.Hash),
-	}
+	}, nil
 }
 
-func (s ApplicationService) Query(request *models.CommandRequest) *models.QueryResponse {
+func (s ApplicationService) Query(request *models.CommandRequest) (*models.QueryResponse, error) {
 	result, err := database.ExecuteCommand(request.Cmd)
 	if err != nil {
-		return &models.QueryResponse{
-			Code:    code.CodeTypeRedisExecutionError,
-			CodeMsg: code.Info(code.CodeTypeRedisExecutionError) + ": " + err.Error(),
-			Result:  "",
-		}
+		return nil, err
 	}
-	return &models.QueryResponse{
-		Code:    code.CodeTypeOK,
-		CodeMsg: code.Info(code.CodeTypeOK),
-		Result:  result,
-	}
+	return &models.QueryResponse{Result: result}, nil
 }
 
-func (s ApplicationService) QueryPrivateDataWithAddress(request *models.CommandRequest, address string) *models.QueryResponse {
+func (s ApplicationService) QueryPrivateDataWithAddress(request *models.CommandRequest, address string) (*models.QueryResponse, error) {
 
 	key, err := database.GetKey(request.Cmd)
 	if err != nil {
 		logger.Log.Error(err)
+		return nil, err
 	}
 	key = utils.ValidatorKey.Address.String() + PrivateSep + key
 	cmd, err := database.ReplaceKey(request.Cmd, key)
 	if err != nil {
 		logger.Log.Error(err)
+		return nil, err
 	}
 	request.Cmd = cmd
 	result, err := database.ExecuteCommand(request.Cmd)
 	if err != nil {
-		return &models.QueryResponse{
-			Code:    code.CodeTypeRedisExecutionError,
-			CodeMsg: code.Info(code.CodeTypeRedisExecutionError) + ": " + err.Error(),
-			Result:  "",
-		}
+		return nil, err
 	}
-	return &models.QueryResponse{
-		Code:    code.CodeTypeOK,
-		CodeMsg: code.Info(code.CodeTypeOK),
-		Result:  result,
-	}
+	return &models.QueryResponse{Result: result}, nil
 }
 
 func (s ApplicationService) RestoreLocalDatabase() error {
@@ -185,11 +156,11 @@ func (s ApplicationService) RestoreLocalDatabase() error {
 	return nil
 }
 
-func (s ApplicationService) QueryTransaction(hash string) *models.Transaction {
+func (s ApplicationService) GetTransaction(hash string) (*models.Transaction, error) {
 	byteHash := utils.HexToByte(hash)
 	tx, err := GetTx(byteHash)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	data := &models.TxCommitBody{}
 	utils.JsonToStruct(tx.Tx, data)
@@ -222,10 +193,10 @@ func (s ApplicationService) QueryTransaction(hash string) *models.Transaction {
 			transaction.Proof.Proof.Aunts = append(transaction.Proof.Proof.Aunts, utils.ByteToHex(v))
 		}
 	}
-	return transaction
+	return transaction, nil
 }
 
-func (s ApplicationService) QueryCommittedTxList(beginHeight int, endHeight int) *models.TransactionCommittedList {
+func (s ApplicationService) GetCommittedTxList(beginHeight int, endHeight int) (*models.TransactionCommittedList, error) {
 
 	txList := &models.TransactionCommittedList{
 		Total: 0,
@@ -234,7 +205,7 @@ func (s ApplicationService) QueryCommittedTxList(beginHeight int, endHeight int)
 	for i := beginHeight; i <= endHeight; i++ {
 		originBlock, err := GetBlockFromHeight(int64(i))
 		if err != nil {
-			break
+			return nil, err
 		}
 		for _, tx := range originBlock.Block.Txs {
 			data := &models.CommittedTx{}
@@ -244,28 +215,23 @@ func (s ApplicationService) QueryCommittedTxList(beginHeight int, endHeight int)
 		}
 	}
 	txList.Total = int64(len(txList.Data))
-	return txList
+	return txList, nil
 }
 
-func (s ApplicationService) QueryBlock(height int) *models.Block {
+func (s ApplicationService) GetBlock(height int) (*models.Block, error) {
 	originBlock, err := GetBlockFromHeight(int64(height))
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return s.ConvertBlock(originBlock)
+	return s.ConvertBlock(originBlock), nil
 }
 
-func (s ApplicationService) GetChainInfo(min int, max int) *models.ChainInfo {
+func (s ApplicationService) GetChainInfo(min int, max int) (*models.ChainInfo, error) {
 	info, err := GetChainInfo(min, max)
 	if err != nil {
-		return &models.ChainInfo{
-			Code:    code.CodeTypeGetChainInfoError,
-			CodeMsg: err.Error(),
-		}
+		return nil, err
 	}
 	res := &models.ChainInfo{
-		Code:       code.CodeTypeOK,
-		CodeMsg:    code.Info(code.CodeTypeOK),
 		LastHeight: info.LastHeight,
 		BlockMetas: make([]*models.BlockMeta, 0),
 	}
@@ -276,34 +242,25 @@ func (s ApplicationService) GetChainInfo(min int, max int) *models.ChainInfo {
 			Header:  *s.ConvertBlockHeader(&v.Header),
 		})
 	}
-	return res
+	return res, nil
 }
 
-func (s ApplicationService) GetChainState() *models.ChainState {
+func (s ApplicationService) GetChainState() (*models.ChainState, error) {
 	originState, err := GetChainState()
 	if err != nil {
-		return &models.ChainState{
-			Code:    code.CodeTypeGetChainStateError,
-			CodeMsg: err.Error(),
-		}
+		return nil, err
 	}
-	state := &models.ChainState{
-		Code:    code.CodeTypeOK,
-		CodeMsg: code.Info(code.CodeTypeOK),
-	}
+	state := &models.ChainState{}
 	utils.JsonToStruct(utils.StructToJson(originState), state)
 	state.ValidatorInfo.PubKey = originState.ValidatorInfo.PubKey.Bytes()
 	state.ValidatorInfo.VotingPower = originState.ValidatorInfo.VotingPower
-	return state
+	return state, nil
 }
 
-func (s ApplicationService) GetGenesis() *models.Genesis {
+func (s ApplicationService) GetGenesis() (*models.Genesis, error) {
 	resultGenesis, err := GetGenesis()
 	if err != nil {
-		return &models.Genesis{
-			Code:    code.CodeTypeGetChainGenesisError,
-			CodeMsg: err.Error(),
-		}
+		return nil, err
 	}
 
 	o := resultGenesis.Genesis
@@ -321,15 +278,13 @@ func (s ApplicationService) GetGenesis() *models.Genesis {
 	}
 
 	return &models.Genesis{
-		Code:            code.CodeTypeOK,
-		CodeMsg:         code.Info(code.CodeTypeOK),
 		GenesisTime:     o.GenesisTime,
 		ChainID:         o.ChainID,
 		ConsensusParams: consensusParams,
 		Validators:      validators,
 		AppHash:         []byte(o.AppHash),
 		AppState:        o.AppState,
-	}
+	}, nil
 }
 
 func (s ApplicationService) QueryVotingValidators() *Vote {
@@ -365,7 +320,12 @@ func (s ApplicationService) StartCommandLogWriter() {
 	}
 	logger.Log.Info("Subscribe tendermint event : NewBlock")
 
-	height := s.GetChainState().SyncInfo.LatestBlockHeight
+	state, err := s.GetChainState()
+	if err != nil {
+
+	}
+
+	height := state.SyncInfo.LatestBlockHeight
 	if height != 1 {
 		for i := 2; i <= int(height); i++ {
 			queryBlock, err := GetBlockFromHeight(int64(i))

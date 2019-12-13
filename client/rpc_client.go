@@ -2,12 +2,12 @@ package client
 
 import (
 	"context"
-	"github.com/chenzhou9513/DecentralizedRedis/rpc/proto"
+	"github.com/chenzhou9513/redimint/rpc/proto"
 	"google.golang.org/grpc"
 )
 
 type RpcClient struct {
-	app proto.DecentralizedRedisClient
+	app proto.redimintClient
 }
 
 func NewRpcClient(address string) (*RpcClient, error) {
@@ -15,7 +15,7 @@ func NewRpcClient(address string) (*RpcClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &RpcClient{proto.NewDecentralizedRedisClient(conn)}, nil
+	return &RpcClient{proto.NewredimintClient(conn)}, nil
 }
 
 func (r RpcClient) Query(cmd *proto.CommandRequest) (*proto.QueryResponse, error) {

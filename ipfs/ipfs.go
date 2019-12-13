@@ -2,8 +2,8 @@ package ipfs
 
 import (
 	"bufio"
-	"github.com/chenzhou9513/DecentralizedRedis/logger"
-	"github.com/chenzhou9513/DecentralizedRedis/utils"
+	"github.com/chenzhou9513/redimint/logger"
+	"github.com/chenzhou9513/redimint/utils"
 	shell "github.com/ipfs/go-ipfs-api"
 	"io"
 	"os"

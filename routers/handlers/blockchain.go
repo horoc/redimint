@@ -1,8 +1,9 @@
 package handlers
 
 import (
-	"github.com/chenzhou9513/DecentralizedRedis/core"
-	"github.com/chenzhou9513/DecentralizedRedis/models"
+	"github.com/chenzhou9513/redimint/core"
+	"github.com/chenzhou9513/redimint/models"
+	"github.com/chenzhou9513/redimint/models/code"
 	"github.com/gin-gonic/gin"
 
 	"net/http"
@@ -12,49 +13,67 @@ func GetTransactionByHash(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
 	request := &models.TxHashRequest{}
 	ginMsg.DecodeRequestBody(request)
-	res := core.AppService.QueryTransaction(request.Hash)
-	ginMsg.Response(http.StatusOK, res)
+	res, err := core.AppService.GetTransaction(request.Hash)
+	if err != nil {
+		ginMsg.Error(http.StatusOK, code.CodeTypeGetChainInfoError, code.CodeTypeGetChainInfoErrorMsg, err)
+	}
+	ginMsg.SuccessWithData(res)
 }
 
 func GetCommittedTxList(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
 	request := &models.CommittedTxListRequest{}
 	ginMsg.DecodeRequestBody(request)
-	res := core.AppService.QueryCommittedTxList(request.Begin, request.End)
-	ginMsg.Response(http.StatusOK, res)
+	res, err := core.AppService.GetCommittedTxList(request.Begin, request.End)
+	if err != nil {
+		ginMsg.Error(http.StatusOK, code.CodeTypeGetChainInfoError, code.CodeTypeGetChainInfoErrorMsg, err)
+	}
+	ginMsg.SuccessWithData(res)
 }
 
 func GetBlockByHeight(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
 	request := &models.BlockHeightRequest{}
 	ginMsg.DecodeRequestBody(request)
-	res := core.AppService.QueryBlock(request.Height)
-	ginMsg.Response(http.StatusOK, res)
+	res, err := core.AppService.GetBlock(request.Height)
+	if err != nil {
+		ginMsg.Error(http.StatusOK, code.CodeTypeGetChainInfoError, code.CodeTypeGetChainInfoErrorMsg, err)
+	}
+	ginMsg.SuccessWithData(res)
 }
 
 func GetChainState(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
-	res := core.AppService.GetChainState()
-	ginMsg.Response(http.StatusOK, res)
+	res, err := core.AppService.GetChainState()
+	if err != nil {
+		ginMsg.Error(http.StatusOK, code.CodeTypeGetChainInfoError, code.CodeTypeGetChainInfoErrorMsg, err)
+	}
+	ginMsg.SuccessWithData(res)
 }
 
 func GetChainInfo(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
 	request := &models.ChainInfoRequest{}
 	ginMsg.DecodeRequestBody(request)
-	res := core.AppService.GetChainInfo(request.Min, request.Max)
-	ginMsg.Response(http.StatusOK, res)
+	res, err := core.AppService.GetChainInfo(request.Min, request.Max)
+	if err != nil {
+		ginMsg.Error(http.StatusOK, code.CodeTypeGetChainInfoError, code.CodeTypeGetChainInfoErrorMsg, err)
+	}
+	ginMsg.SuccessWithData(res)
+}
+
+func GetGenesis(c *gin.Context) {
+	ginMsg := models.GinMsg{C: c}
+	res, err := core.AppService.GetGenesis()
+	if err != nil {
+		ginMsg.Error(http.StatusOK, code.CodeTypeGetChainInfoError, code.CodeTypeGetChainInfoErrorMsg, err)
+	}
+	ginMsg.SuccessWithData(res)
 }
 
 func GetVotingValidator(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
 	res := core.AppService.QueryVotingValidators()
-	ginMsg.Response(http.StatusOK, res)
-}
-
-func GetGenesis(c *gin.Context) {
-	ginMsg := models.GinMsg{C: c}
-	res := core.AppService.GetGenesis()
 	ginMsg.Response(http.StatusOK, res)
 }
 

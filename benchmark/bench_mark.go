@@ -3,8 +3,8 @@ package benchmark
 import (
 	"errors"
 	"fmt"
-	"github.com/chenzhou9513/DecentralizedRedis/core"
-	"github.com/chenzhou9513/DecentralizedRedis/models"
+	"github.com/chenzhou9513/redimint/core"
+	"github.com/chenzhou9513/redimint/models"
 	"strings"
 	"sync"
 	"time"

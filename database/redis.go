@@ -3,8 +3,8 @@ package database
 import (
 	"errors"
 	"fmt"
-	"github.com/chenzhou9513/DecentralizedRedis/logger"
-	"github.com/chenzhou9513/DecentralizedRedis/utils"
+	"github.com/chenzhou9513/redimint/logger"
+	"github.com/chenzhou9513/redimint/utils"
 	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/go-redis/redis"
 	"os/exec"

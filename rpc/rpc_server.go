@@ -3,10 +3,11 @@ package rpc
 import (
 	context "context"
 	"fmt"
-	"github.com/chenzhou9513/DecentralizedRedis/core"
-	"github.com/chenzhou9513/DecentralizedRedis/logger"
-	"github.com/chenzhou9513/DecentralizedRedis/models"
-	"github.com/chenzhou9513/DecentralizedRedis/rpc/proto"
+	"github.com/chenzhou9513/redimint/core"
+	"github.com/chenzhou9513/redimint/logger"
+	"github.com/chenzhou9513/redimint/models"
+	proto "github.com/chenzhou9513/redimint/rpc/proto"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"net"
@@ -24,7 +25,7 @@ func NewRpcServer(port string) *Server {
 		app:    &DBService{},
 		port:   port,
 	}
-	proto.RegisterDecentralizedRedisServer(s.server, s.app)
+	proto.RegisterRedimintServer(s.server, s.app)
 	reflection.Register(s.server)
 	return s
 }

@@ -34,7 +34,7 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 			out = fmt.Sprintf("[%s][%s] | [GIN] |%s\n", level, timeFmt, entry.Message)
 			return []byte(out), nil
 		}
-		index := strings.LastIndex(entry.Caller.Function, "DecentralizedRedis")
+		index := strings.LastIndex(entry.Caller.Function, "redimint")
 		out = fmt.Sprintf("[%s][%s] | [APP] | %s(%d) | %s\n", level, timeFmt, entry.Caller.Function[index+19:len(entry.Caller.Function)], entry.Caller.Line, entry.Message)
 	} else {
 		out = fmt.Sprintf("[%s][%s] | [APP] | %s\n", level, timeFmt, entry.Message)

@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"github.com/chenzhou9513/DecentralizedRedis/logger"
-	"github.com/chenzhou9513/DecentralizedRedis/models"
-	"github.com/chenzhou9513/DecentralizedRedis/models/code"
-	"github.com/chenzhou9513/DecentralizedRedis/utils"
+	"github.com/chenzhou9513/redimint/logger"
+	"github.com/chenzhou9513/redimint/models"
+	"github.com/chenzhou9513/redimint/models/code"
+	"github.com/chenzhou9513/redimint/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -30,7 +30,7 @@ func Login(c *gin.Context) {
 	}
 	ginMsg.Response(http.StatusOK, &models.TokenResponse{
 		Code:    code.CodeTypeOK,
-		CodeMsg: code.Info(code.CodeTypeOK),
+		CodeMsg: code.CodeTypeOKMsg,
 		Token:   s,
 	})
 }

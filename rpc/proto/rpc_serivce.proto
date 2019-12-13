@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-service DecentralizedRedis {
+service redimint {
   rpc Query(CommandRequest) returns (QueryResponse) {}
 }
 message CommandRequest{

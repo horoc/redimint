@@ -1,4 +1,4 @@
-module github.com/chenzhou9513/DecentralizedRedis
+module github.com/chenzhou9513/redimint
 
 go 1.12
 

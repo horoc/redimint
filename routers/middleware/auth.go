@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"github.com/chenzhou9513/DecentralizedRedis/models/code"
-	"github.com/chenzhou9513/DecentralizedRedis/utils"
+	"github.com/chenzhou9513/redimint/models/code"
+	"github.com/chenzhou9513/redimint/utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"net/http"

@@ -1,25 +1,28 @@
 package core
 
-import "github.com/chenzhou9513/DecentralizedRedis/models"
+import "github.com/chenzhou9513/redimint/models"
 
 type Service interface {
+	//database
 	RestoreLocalDatabase() error
-	Query(request *models.CommandRequest) *models.QueryResponse
-	QueryPrivateDataWithAddress(request *models.CommandRequest, address string) *models.QueryResponse
+	Query(request *models.CommandRequest) (*models.QueryResponse, error)
+	QueryPrivateDataWithAddress(request *models.CommandRequest, address string) (*models.QueryResponse, error)
+	Execute(request *models.CommandRequest) (*models.ExecuteResponse, error)
+	ExecuteAsync(request *models.CommandRequest) (*models.ExecuteAsyncResponse, error)
+	ExecuteWithPrivateKey(request *models.CommandRequest) (*models.ExecuteResponse, error)
 
-	Execute(request *models.CommandRequest) *models.ExecuteResponse
-	ExecuteAsync(request *models.CommandRequest) *models.ExecuteAsyncResponse
-	ExecuteWithPrivateKey(request *models.CommandRequest) *models.ExecuteResponse
+	//chain
+	GetBlock(height int) (*models.Block, error)
+	GetGenesis() (*models.Genesis, error)
+	GetChainInfo(min int, max int) (*models.ChainInfo, error)
+	GetChainState() (*models.ChainState, error)
+	GetTransaction(hash string) (*models.Transaction, error)
+	GetCommittedTxList(beginHeight int, endHeight int) (*models.TransactionCommittedList, error)
 
-	QueryTransaction(hash string) *models.Transaction
-	QueryCommittedTxList(beginHeight int, endHeight int) *models.TransactionCommittedList
-	QueryBlock(height int) *models.Block
+	//validators
 	QueryVotingValidators() *Vote
 	UpdateValidators(update *models.ValidatorUpdateData) *VoteCount
 
-	GetChainState() *models.ChainState
-	GetChainInfo(min int, max int) *models.ChainInfo
-	GetGenesis() *models.Genesis
-
+	//log writer
 	StartCommandLogWriter()
 }

@@ -3,9 +3,11 @@ package models
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/chenzhou9513/DecentralizedRedis/utils"
+	"github.com/chenzhou9513/redimint/models/code"
+	"github.com/chenzhou9513/redimint/utils"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
+	"net/http"
 	"strings"
 )
 
@@ -13,17 +15,44 @@ type GinMsg struct {
 	C *gin.Context
 }
 
-type ErrorResponse struct {
-	Code    uint32 `json:"code"`
-	CodeMsg string `json:"code_info"`
+type CommonResponse struct {
+	Code    uint32      `json:"code"`
+	CodeMsg string      `json:"code_info"`
+	Data    interface{} `json:"data"`
 }
 
 func (g *GinMsg) Response(httpCode int, data interface{}) {
 	g.C.JSON(httpCode, data)
 	return
 }
-func (g *GinMsg) ErrorResponse(httpCode int, code uint32, codeMsg string) {
-	g.C.JSON(httpCode, &ErrorResponse{
+
+func (g *GinMsg) SuccessWithData(data interface{}) {
+	g.C.JSON(http.StatusOK, &CommonResponse{
+		Code:    code.CodeTypeOK,
+		CodeMsg: code.CodeTypeOKMsg,
+		Data:    data,
+	})
+	return
+}
+
+func (g *GinMsg) Success() {
+	g.C.JSON(http.StatusOK, &CommonResponse{
+		Code:    code.CodeTypeOK,
+		CodeMsg: code.CodeTypeOKMsg,
+	})
+	return
+}
+
+func (g *GinMsg) Error(httpCode int, code uint32, codeMsg string, err error) {
+	g.C.JSON(httpCode, &CommonResponse{
+		Code:    code,
+		CodeMsg: fmt.Sprintf(codeMsg+" : %s", err),
+	})
+	return
+}
+
+func (g *GinMsg) CommonResponse(httpCode int, code uint32, codeMsg string) {
+	g.C.JSON(httpCode, &CommonResponse{
 		Code:    code,
 		CodeMsg: codeMsg,
 	})
@@ -35,21 +64,17 @@ func (g *GinMsg) DecodeRequestBody(data interface{}) {
 	utils.JsonToStruct(body, data)
 }
 
-// The main purpose of HexBytes is to enable HEX-encoding for json/encoding.
 type HexBytes []byte
 
-// Marshal needed for protobuf compatibility
 func (bz HexBytes) Marshal() ([]byte, error) {
 	return bz, nil
 }
 
-// Unmarshal needed for protobuf compatibility
 func (bz *HexBytes) Unmarshal(data []byte) error {
 	*bz = data
 	return nil
 }
 
-// This is the point of Bytes.
 func (bz HexBytes) MarshalJSON() ([]byte, error) {
 	s := strings.ToUpper(hex.EncodeToString(bz))
 	jbz := make([]byte, len(s)+2)
@@ -59,7 +84,6 @@ func (bz HexBytes) MarshalJSON() ([]byte, error) {
 	return jbz, nil
 }
 
-// This is the point of Bytes.
 func (bz *HexBytes) UnmarshalJSON(data []byte) error {
 	if len(data) < 2 || data[0] != '"' || data[len(data)-1] != '"' {
 		return fmt.Errorf("Invalid hex string: %s", data)
@@ -72,20 +96,10 @@ func (bz *HexBytes) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Allow it to fulfill various interfaces in light-client, etc...
 func (bz HexBytes) Bytes() []byte {
 	return bz
 }
 
 func (bz HexBytes) String() string {
 	return strings.ToUpper(hex.EncodeToString(bz))
-}
-
-func (bz HexBytes) Format(s fmt.State, verb rune) {
-	switch verb {
-	case 'p':
-		s.Write([]byte(fmt.Sprintf("%p", bz)))
-	default:
-		s.Write([]byte(fmt.Sprintf("%X", []byte(bz))))
-	}
 }
