@@ -322,7 +322,8 @@ func (s ApplicationService) StartCommandLogWriter() {
 
 	state, err := s.GetChainState()
 	if err != nil {
-
+		logger.Log.Error(err)
+		panic(err)
 	}
 
 	height := state.SyncInfo.LatestBlockHeight

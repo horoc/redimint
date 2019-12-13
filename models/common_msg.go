@@ -86,7 +86,7 @@ func (bz HexBytes) MarshalJSON() ([]byte, error) {
 
 func (bz *HexBytes) UnmarshalJSON(data []byte) error {
 	if len(data) < 2 || data[0] != '"' || data[len(data)-1] != '"' {
-		return fmt.Errorf("Invalid hex string: %s", data)
+		return nil
 	}
 	bz2, err := hex.DecodeString(string(data[1 : len(data)-1]))
 	if err != nil {

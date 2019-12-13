@@ -2,7 +2,6 @@ package rpc
 
 import (
 	context "context"
-	"fmt"
 	"github.com/chenzhou9513/redimint/core"
 	"github.com/chenzhou9513/redimint/logger"
 	"github.com/chenzhou9513/redimint/models"
@@ -47,11 +46,11 @@ type DBService struct {
 }
 
 func (r DBService) Query(c context.Context, req *proto.CommandRequest) (*proto.QueryResponse, error) {
-	fmt.Println("get resquest")
-	queryResponse := core.AppService.Query(&models.CommandRequest{Cmd: req.Cmd})
+	queryResponse, err := core.AppService.Query(&models.CommandRequest{Cmd: req.Cmd})
+	if err != nil {
+		return nil, err
+	}
 	return &proto.QueryResponse{
-		Code:    queryResponse.Code,
-		CodeMsg: queryResponse.CodeMsg,
-		Result:  queryResponse.Result,
+		Result: queryResponse.Result,
 	}, nil
 }

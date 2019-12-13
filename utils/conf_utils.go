@@ -64,5 +64,4 @@ func InitConfig() {
 		return
 	}
 	yaml.Unmarshal(yamlFile, &Config)
-
 }

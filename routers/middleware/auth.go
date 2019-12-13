@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"github.com/chenzhou9513/redimint/models"
 	"github.com/chenzhou9513/redimint/models/code"
 	"github.com/chenzhou9513/redimint/utils"
 	"github.com/dgrijalva/jwt-go"
@@ -11,6 +12,8 @@ import (
 
 func Authorization() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ginMsg := models.GinMsg{C: c}
+
 		respCode := code.CodeTypeOK
 		token := c.GetHeader("token")
 		address := c.ClientIP()
@@ -31,10 +34,7 @@ func Authorization() gin.HandlerFunc {
 		}
 
 		if respCode != code.CodeTypeOK || strings.EqualFold(claims.Address, address) {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code": respCode,
-				"msg":  "Invalid Token",
-			})
+			ginMsg.CommonResponse(http.StatusUnauthorized, uint32(respCode), "Invalid Token")
 			c.Abort()
 			return
 		}
