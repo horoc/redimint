@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/chenzhou9513/DecentralizedRedis/core"
-	"github.com/chenzhou9513/DecentralizedRedis/database"
-	"github.com/chenzhou9513/DecentralizedRedis/ipfs"
-	"github.com/chenzhou9513/DecentralizedRedis/logger"
-	"github.com/chenzhou9513/DecentralizedRedis/network"
-	"github.com/chenzhou9513/DecentralizedRedis/utils"
+	"github.com/chenzhou9513/redimint/core"
+	"github.com/chenzhou9513/redimint/database"
+	"github.com/chenzhou9513/redimint/ipfs"
+	"github.com/chenzhou9513/redimint/logger"
+	"github.com/chenzhou9513/redimint/network"
+	"github.com/chenzhou9513/redimint/utils"
 	abciserver "github.com/tendermint/tendermint/abci/server"
 	tlog "github.com/tendermint/tendermint/libs/log"
 

@@ -2,11 +2,11 @@ package network
 
 import (
 	"fmt"
-	"github.com/chenzhou9513/DecentralizedRedis/core"
-	"github.com/chenzhou9513/DecentralizedRedis/logger"
-	"github.com/chenzhou9513/DecentralizedRedis/routers"
-	"github.com/chenzhou9513/DecentralizedRedis/rpc"
-	"github.com/chenzhou9513/DecentralizedRedis/utils"
+	"github.com/chenzhou9513/redimint/core"
+	"github.com/chenzhou9513/redimint/logger"
+	"github.com/chenzhou9513/redimint/routers"
+	"github.com/chenzhou9513/redimint/rpc"
+	"github.com/chenzhou9513/redimint/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"

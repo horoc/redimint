@@ -3,9 +3,9 @@ package core
 import (
 	"context"
 	"fmt"
-	"github.com/chenzhou9513/DecentralizedRedis/logger"
-	"github.com/chenzhou9513/DecentralizedRedis/models"
-	"github.com/chenzhou9513/DecentralizedRedis/utils"
+	"github.com/chenzhou9513/redimint/logger"
+	"github.com/chenzhou9513/redimint/models"
+	"github.com/chenzhou9513/redimint/utils"
 	c "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 

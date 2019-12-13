@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"bytes"
-	"github.com/chenzhou9513/DecentralizedRedis/logger"
+	"github.com/chenzhou9513/redimint/logger"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"strings"

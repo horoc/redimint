@@ -1,5 +1,5 @@
 tendermint
-DecentralizedRedis
+redimint
 *.log
 .idea
 dump.rdb
