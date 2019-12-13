@@ -161,12 +161,11 @@ func (app *LogStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.
 
 //#################### BeginBlock ####################
 func (app *LogStoreApplication) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.ResponseBeginBlock {
-
-	app.currentHeight = req.Header.Height
-
 	if app.pauseFlag == true {
 		app.wg.Wait()
 	}
+
+	app.currentHeight = req.Header.Height
 
 	//reset valUpdates
 	app.valUpdates = make([]abcitypes.ValidatorUpdate, 0)

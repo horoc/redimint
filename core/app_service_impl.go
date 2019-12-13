@@ -168,9 +168,20 @@ func (s ApplicationService) QueryPrivateDataWithAddress(request *models.CommandR
 }
 
 func (s ApplicationService) RestoreLocalDatabase() error {
-	database.StopRedis()
-	database.StartRedisServer()
-
+	txs, err := utils.ReadTxFromDBLogFile(2, int(LogStoreApp.currentHeight))
+	if err != nil {
+		logger.Log.Error(err)
+		return err
+	}
+	LogStoreApp.Pause()
+	database.RestartRedisServer()
+	logger.Log.Info("Restore Local Database Begin ... ")
+	for _, c := range txs {
+		database.ExecuteCommand(c)
+		logger.Log.Info("Restore Execute command: " + c)
+	}
+	logger.Log.Info("Restore Local Database Finished... ")
+	LogStoreApp.Continue()
 	return nil
 }
 
@@ -354,6 +365,18 @@ func (s ApplicationService) StartCommandLogWriter() {
 	}
 	logger.Log.Info("Subscribe tendermint event : NewBlock")
 
+	height := s.GetChainState().SyncInfo.LatestBlockHeight
+	if height != 1 {
+		for i := 2; i <= int(height); i++ {
+			queryBlock, err := GetBlockFromHeight(int64(i))
+			if err != nil {
+				logger.Log.Error(err)
+				break
+			}
+			strList := s.ConvertTransactionsToLogString(queryBlock.Block.Txs, queryBlock.Block.Height, queryBlock.Block.Time.String())
+			utils.AppendToDBLogFile(strList)
+		}
+	}
 	for {
 		select {
 		case resultEvent := <-out:
@@ -362,8 +385,6 @@ func (s ApplicationService) StartCommandLogWriter() {
 			lock.Lock()
 			utils.AppendToDBLogFile(strList)
 			lock.Unlock()
-		default:
-			time.Sleep(time.Nanosecond * 1e3)
 		}
 	}
 }

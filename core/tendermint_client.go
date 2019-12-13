@@ -144,7 +144,7 @@ func SubScribeEvent(event string) (out <-chan ctypes.ResultEvent, err error) {
 		tendermintHttpClient.Start()
 	}
 	eventQuery := "tm.event= '" + event + "'"
-	out, err = tendermintHttpClient.Subscribe(context.Background(), "", eventQuery)
+	out, err = tendermintHttpClient.Subscribe(context.Background(), "", eventQuery, 1024)
 	if err != nil {
 		err = fmt.Errorf("SubScribeEvent error : %s, %s", eventQuery, err)
 		logger.Log.Error(err)

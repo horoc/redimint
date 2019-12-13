@@ -9,6 +9,7 @@ import (
 	"github.com/go-redis/redis"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 var Client *redis.Client
@@ -44,6 +45,14 @@ func NewRedisClient() *redis.Client {
 	return client
 }
 
+func RestartRedisServer() {
+	StopRedis()
+	StartRedisServer()
+	if !IsRunning() {
+		time.Sleep(time.Millisecond * 50)
+	}
+}
+
 func StopRedis() {
 	status := Client.Shutdown()
 	if status.Err() != nil {
@@ -57,6 +66,14 @@ func StartRedisServer() {
 	if err != nil {
 		logger.Log.Error(err)
 	}
+}
+
+func IsRunning() bool {
+	_, err := Client.Ping().Result()
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 func DumpRDBFile() string {
