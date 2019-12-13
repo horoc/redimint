@@ -59,8 +59,15 @@ func RestoreLocalDatabase(c *gin.Context) {
 	err := core.AppService.RestoreLocalDatabase()
 	if err != nil {
 		logger.Log.Error(err)
+		ginMsg.Response(http.StatusOK, gin.H{
+			"code": code.CodeTypeInternalError,
+			"msg":  err,
+		})
 	}
-	ginMsg.Response(http.StatusOK, nil)
+	ginMsg.Response(http.StatusOK, gin.H{
+		"code": code.CodeTypeOK,
+		"msg":  code.Info(code.CodeTypeOK),
+	})
 }
 
 func BenchMarkTest(c *gin.Context) {

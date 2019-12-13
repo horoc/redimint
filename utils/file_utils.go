@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 )
 
 const DbTxLogFilePath = "./log/db_transactions"
@@ -25,6 +27,34 @@ func AppendToDBLogFile(lines []string) error {
 		w.WriteString(v + "\n")
 	}
 	return w.Flush()
+}
+
+//command | addr | sign | seq | height | time
+func ReadTxFromDBLogFile(beginHeight int, endHeight int) ([]string, error) {
+	f, err := os.Open(DbTxLogFilePath)
+	if err != nil {
+		return nil, err
+	}
+	buf := bufio.NewReader(f)
+	strList := make([]string, 0)
+	for {
+		line, err := buf.ReadString('\n')
+		split := strings.Split(line, " | ")
+		if len(split) < 6 {
+			break
+		}
+		height, err := strconv.Atoi(split[4])
+		if err != nil {
+			return nil, err
+		}
+		if height > endHeight {
+			break
+		} else if height < beginHeight {
+			continue
+		}
+		strList = append(strList, split[0])
+	}
+	return strList, nil
 }
 
 func Exists(path string) bool {
