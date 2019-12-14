@@ -2,12 +2,12 @@ package client
 
 import (
 	"context"
-	"github.com/chenzhou9513/redimint/rpc/proto"
+	proto "github.com/chenzhou9513/redimint/grpc/proto"
 	"google.golang.org/grpc"
 )
 
 type RpcClient struct {
-	app proto.redimintClient
+	app proto.RedimintClient
 }
 
 func NewRpcClient(address string) (*RpcClient, error) {
@@ -15,7 +15,7 @@ func NewRpcClient(address string) (*RpcClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &RpcClient{proto.NewredimintClient(conn)}, nil
+	return &RpcClient{proto.NewRedimintClient(conn)}, nil
 }
 
 func (r RpcClient) Query(cmd *proto.CommandRequest) (*proto.QueryResponse, error) {

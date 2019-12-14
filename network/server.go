@@ -3,9 +3,9 @@ package network
 import (
 	"fmt"
 	"github.com/chenzhou9513/redimint/core"
+	"github.com/chenzhou9513/redimint/grpc"
 	"github.com/chenzhou9513/redimint/logger"
 	"github.com/chenzhou9513/redimint/routers"
-	"github.com/chenzhou9513/redimint/rpc"
 	"github.com/chenzhou9513/redimint/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -17,7 +17,7 @@ var AppServer *Server
 type Server struct {
 	httpPort   string
 	rpcPort    string
-	rpcServer  *rpc.Server
+	rpcServer  *grpc.Server
 	httpServer *http.Server
 }
 
@@ -39,7 +39,7 @@ func NewServer() *Server {
 		Handler: routersInit,
 	}
 
-	server.rpcServer = rpc.NewRpcServer(strconv.Itoa(utils.Config.Rpc.Port))
+	server.rpcServer = grpc.NewRpcServer(strconv.Itoa(utils.Config.Rpc.Port))
 	AppServer = server
 
 	return server

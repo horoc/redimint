@@ -7,7 +7,6 @@ import (
 	"github.com/chenzhou9513/redimint/logger"
 	"github.com/chenzhou9513/redimint/models"
 	"github.com/chenzhou9513/redimint/models/code"
-	"github.com/chenzhou9513/redimint/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
@@ -54,11 +53,10 @@ func QueryPrivateCommand(c *gin.Context) {
 	addr := c.Query("address")
 	var res *models.QueryResponse
 	var err error
-
 	if len(addr) != 0 {
-		res, err = core.AppService.QueryPrivateDataWithAddress(&models.CommandRequest{request.Cmd}, strings.ToUpper(addr))
+		res, err = core.AppService.QueryPrivateDataWithAddress(&models.QueryPrivateWithAddrRequest{request.Cmd, strings.ToUpper(addr)})
 	} else {
-		res, err = core.AppService.QueryPrivateDataWithAddress(&models.CommandRequest{request.Cmd}, utils.ValidatorKey.Address.String())
+		res, err = core.AppService.QueryPrivateData(&models.CommandRequest{request.Cmd})
 	}
 	if err != nil {
 		ginMsg.Error(http.StatusOK, code.CodeTypeRedimintQueryError, code.CodeTypeRedimintQueryErrorMsg, err)

@@ -14,6 +14,7 @@ const (
 	CodeTypeInvalidRedisCommand
 	CodeTypeInvalidTx
 	CodeTypePermissionDenied
+	CodeTypeDBPasswordIncorrectError
 	CodeTypeTokenTimeoutError
 	CodeTypeTokenInvalidError
 	CodeTypeIncorrectPassword

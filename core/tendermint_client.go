@@ -101,7 +101,6 @@ func GetChainInfo(min int, max int) (*ctypes.ResultBlockchainInfo, error) {
 func GetChainState() (*ctypes.ResultStatus, error) {
 
 	logger.Log.Info("Tendermint GetChainState ")
-
 	resultStatus, err := tendermintHttpClient.Status()
 	if err != nil {
 		err = fmt.Errorf("get chain state error : %s", err)

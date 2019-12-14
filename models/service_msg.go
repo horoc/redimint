@@ -13,6 +13,11 @@ type CommandRequest struct {
 	Cmd string `json:"cmd"`
 }
 
+type QueryPrivateWithAddrRequest struct {
+	Cmd     string `json:"command"`
+	Address string `json:"address"`
+}
+
 type ExecuteResponse struct {
 	Cmd           string `json:"command"`
 	ExecuteResult string `json:"execute_result"`
@@ -32,7 +37,7 @@ type ExecuteAsyncResponse struct {
 }
 
 type QueryResponse struct {
-	Result  string `json:"result"`
+	Result string `json:"result"`
 }
 
 //Transaction
@@ -122,9 +127,8 @@ type Header struct {
 }
 
 type Data struct {
-
-	Txs []string `json:"txs"`
-	Hash string `json:"hash"`
+	Txs  []string `json:"txs"`
+	Hash string   `json:"hash"`
 }
 
 type CommitSig struct {
@@ -196,15 +200,14 @@ type ConsensusParams struct {
 }
 
 type BlockParams struct {
-	MaxBytes int64 `json:"max_bytes"`
-	MaxGas   int64 `json:"max_gas"`
+	MaxBytes   int64 `json:"max_bytes"`
+	MaxGas     int64 `json:"max_gas"`
 	TimeIotaMs int64 `json:"time_iota_ms"`
 }
 
 type EvidenceParams struct {
 	MaxAge int64 `json:"max_age"`
 }
-
 
 type ValidatorParams struct {
 	PubKeyTypes []string `json:"pub_key_types"`
