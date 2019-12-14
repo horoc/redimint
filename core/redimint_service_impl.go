@@ -10,6 +10,7 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -117,7 +118,7 @@ func (s ApplicationService) Query(request *models.CommandRequest) (*models.Query
 	return &models.QueryResponse{Result: result}, nil
 }
 
-func (s ApplicationService) QueryPrivateDataWithAddress(request *models.CommandRequest, address string) (*models.QueryResponse, error) {
+func (s ApplicationService) QueryPrivateData(request *models.CommandRequest) (*models.QueryResponse, error) {
 
 	key, err := database.GetKey(request.Cmd)
 	if err != nil {
@@ -125,6 +126,27 @@ func (s ApplicationService) QueryPrivateDataWithAddress(request *models.CommandR
 		return nil, err
 	}
 	key = utils.ValidatorKey.Address.String() + PrivateSep + key
+	cmd, err := database.ReplaceKey(request.Cmd, key)
+	if err != nil {
+		logger.Log.Error(err)
+		return nil, err
+	}
+	request.Cmd = cmd
+	result, err := database.ExecuteCommand(request.Cmd)
+	if err != nil {
+		return nil, err
+	}
+	return &models.QueryResponse{Result: result}, nil
+}
+
+func (s ApplicationService) QueryPrivateDataWithAddress(request *models.QueryPrivateWithAddrRequest) (*models.QueryResponse, error) {
+
+	key, err := database.GetKey(request.Cmd)
+	if err != nil {
+		logger.Log.Error(err)
+		return nil, err
+	}
+	key = strings.ToUpper(request.Address) + PrivateSep + key
 	cmd, err := database.ReplaceKey(request.Cmd, key)
 	if err != nil {
 		logger.Log.Error(err)

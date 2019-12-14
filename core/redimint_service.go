@@ -6,7 +6,8 @@ type Service interface {
 	//database
 	RestoreLocalDatabase() error
 	Query(request *models.CommandRequest) (*models.QueryResponse, error)
-	QueryPrivateDataWithAddress(request *models.CommandRequest, address string) (*models.QueryResponse, error)
+	QueryPrivateData(request *models.CommandRequest) (*models.QueryResponse, error)
+	QueryPrivateDataWithAddress(request *models.QueryPrivateWithAddrRequest) (*models.QueryResponse, error)
 	Execute(request *models.CommandRequest) (*models.ExecuteResponse, error)
 	ExecuteAsync(request *models.CommandRequest) (*models.ExecuteAsyncResponse, error)
 	ExecuteWithPrivateKey(request *models.CommandRequest) (*models.ExecuteResponse, error)

@@ -138,7 +138,10 @@ func GenerateToken(address string, mode string, username string, password string
 
 	tokenClaims := jwt.NewWithClaims(jwt.GetSigningMethod("NodeKeySignMethod"), claims)
 	token, err := tokenClaims.SignedString(NodeKey.PrivKey)
-
+	if err != nil {
+		logger.Log.Errorf("GenerateToken error : ", err)
+		return "", err
+	}
 	return token, err
 }
 
