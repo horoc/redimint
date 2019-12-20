@@ -8,6 +8,7 @@ import (
 	"github.com/chenzhou9513/redimint/logger"
 	"github.com/chenzhou9513/redimint/models"
 	c "github.com/chenzhou9513/redimint/models/code"
+	"github.com/chenzhou9513/redimint/plugins"
 	"github.com/chenzhou9513/redimint/utils"
 	"github.com/dgraph-io/badger"
 	"github.com/emirpasic/gods/sets/hashset"
@@ -37,6 +38,8 @@ type LogStoreApplication struct {
 	privateTxSet *hashset.Set
 
 	logSize atomic.Int64
+
+	plugin plugins.TransactionPlugin
 
 	initFlag bool
 
@@ -68,6 +71,7 @@ func InitLogStoreApplication() {
 		initFlag:               true,
 		currentCommittedHeight: 1,
 		privateTxSet:           hashset.New(),
+		plugin:                 plugins.GetConfigPlugin(),
 	}
 }
 
@@ -114,6 +118,11 @@ func (app *LogStoreApplication) isValid(tx []byte) (uint32, string) {
 	if pubkey.VerifyBytes(data, utils.HexToByte(sign)) != true {
 		return c.CodeTypeInvalidSign, c.CodeTypeInvalidSignMsg
 	}
+
+	if b, msg := app.plugin.CustomTxValidationCheck(tx); !b {
+		return c.CodeTypeInternalError, c.CodeTypeInternalErrorMsg + " : " + msg
+	}
+
 	return c.CodeTypeOK, c.CodeTypeOKMsg
 }
 
@@ -217,7 +226,8 @@ func (app *LogStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcity
 			logger.Log.Error(err)
 			panic(err)
 		}
-		return abcitypes.ResponseDeliverTx{Code: c.CodeTypeOK, Data: []byte("Result:" + res)}
+		log := app.plugin.CustomTransactionDeliverLog(req.Tx, res)
+		return abcitypes.ResponseDeliverTx{Code: c.CodeTypeOK, Data: []byte("Result:" + res), Log: log}
 	}
 }
 

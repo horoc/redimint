@@ -3,6 +3,7 @@ app-config:
   db_password: App@1234
   admin_user: admin
   admin_passowrd: admin
+# plugin: default
 
 redis-config:
   url: 127.0.0.1:6379
