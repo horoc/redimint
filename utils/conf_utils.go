@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"time"
+	"github.com/creasty/defaults"
 )
 
 type Configuration struct {
@@ -50,18 +51,26 @@ type AppConfig struct {
 	DbPassword    string `yaml:"db_password"`
 	AdminUser     string `yaml:"admin_user"`
 	AdminPassword string `yaml:"admin_passowrd"`
+	Plugin        string `yaml:"plugin" default:"default"`
 }
 
 var Config Configuration
 
 func InitConfig() {
-	abspath, err := filepath.Abs("./conf/configuration.yaml")
+	absPath, err := filepath.Abs("./conf/configuration.yaml")
 	if err != nil {
 	}
-	yamlFile, err := ioutil.ReadFile(abspath)
+	yamlFile, err := ioutil.ReadFile(absPath)
 	if err != nil {
 		logger.Log.Error(err)
 		return
 	}
 	yaml.Unmarshal(yamlFile, &Config)
+	setDefaults(&Config)
+}
+
+func setDefaults(v interface{}){
+	if err := defaults.Set(v); err != nil {
+		panic(err)
+	}
 }
