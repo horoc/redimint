@@ -14,7 +14,7 @@ func InitLogger() {
 	Log.SetReportCaller(true)
 	Log.SetFormatter(customFormatter)
 
-	f, err := os.OpenFile("./log/server.log", os.O_WRONLY|os.O_CREATE, 0755)
+	f, err := os.OpenFile("../log/server.log", os.O_WRONLY|os.O_CREATE, 0755)
 	if err != nil {
 		Log.Error(err)
 		return

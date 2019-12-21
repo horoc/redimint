@@ -2,11 +2,11 @@ package utils
 
 import (
 	"github.com/chenzhou9513/redimint/logger"
+	"github.com/creasty/defaults"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"path/filepath"
 	"time"
-	"github.com/creasty/defaults"
 )
 
 type Configuration struct {
@@ -57,7 +57,7 @@ type AppConfig struct {
 var Config Configuration
 
 func InitConfig() {
-	absPath, err := filepath.Abs("./conf/configuration.yaml")
+	absPath, err := filepath.Abs("../conf/configuration.yaml")
 	if err != nil {
 	}
 	yamlFile, err := ioutil.ReadFile(absPath)
@@ -69,7 +69,7 @@ func InitConfig() {
 	setDefaults(&Config)
 }
 
-func setDefaults(v interface{}){
+func setDefaults(v interface{}) {
 	if err := defaults.Set(v); err != nil {
 		panic(err)
 	}

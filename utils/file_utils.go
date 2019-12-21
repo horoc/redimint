@@ -3,12 +3,18 @@ package utils
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
 )
 
-const DbTxLogFilePath = "./log/db_transactions"
+const(
+	DbTxLogFilePath = "../log/db_transactions"
+	AppLogFilePath = "../log/application.log"
+)
+
+
 
 func InitFiles() {
 	os.Remove(DbTxLogFilePath)
@@ -64,4 +70,35 @@ func Exists(path string) bool {
 	} else {
 		return false
 	}
+}
+
+func DeleteFile(path string) {
+	if Exists(path) {
+		os.RemoveAll(path)
+	}
+}
+
+func CreateDir(path string) {
+	os.MkdirAll(path, os.ModePerm)
+}
+
+//existing file will be overwritten
+func CopyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return err
+	}
+	return out.Close()
 }
