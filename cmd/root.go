@@ -1,0 +1,20 @@
+package cmd
+
+import (
+	"fmt"
+	"github.com/spf13/cobra"
+	"os"
+)
+
+var rootCmd = &cobra.Command{
+	Use:   "redimint",
+	Short: "Decentralized K-V database",
+	Long:  `A Decentralized K-V database based on Redis and Tendermint Blockchain`,
+}
+
+func Execute() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
+}

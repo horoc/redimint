@@ -19,6 +19,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.2.0
+	github.com/spf13/cobra v0.0.5
 	github.com/stumble/gorocksdb v0.0.3 // indirect
 	github.com/tendermint/tendermint v0.32.7
 	go.uber.org/atomic v1.4.0

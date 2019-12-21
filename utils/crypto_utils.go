@@ -23,7 +23,7 @@ func InitKey() {
 }
 
 func InitNodeKey() {
-	key, err := p2p.LoadNodeKey("./chain/config/node_key.json")
+	key, err := p2p.LoadNodeKey("../chain/config/node_key.json")
 	if err != nil {
 		logger.Log.Error(err)
 		return
@@ -32,8 +32,8 @@ func InitNodeKey() {
 }
 
 func InitValidatorKey() {
-	keyFile := filepath.Join("./chain", "config", "priv_validator_key.json")
-	stateFile := filepath.Join("./chain", "data", "priv_validator_state.json")
+	keyFile := filepath.Join("../chain", "config", "priv_validator_key.json")
+	stateFile := filepath.Join("../chain", "data", "priv_validator_state.json")
 	fpv := privval.LoadFilePV(keyFile, stateFile)
 	ValidatorKey = &fpv.Key
 }
