@@ -6,3 +6,4 @@ dump.rdb
 tendermint.sock
 chain
 db_transactions
+redimint_home
