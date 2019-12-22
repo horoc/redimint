@@ -9,7 +9,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "redimint",
 	Short: "Decentralized K-V database",
-	Long:  `A Decentralized K-V database based on Redis and Tendermint Blockchain`,
+	Long:  "Decentralized K-V database based on Redis and Tendermint Blockchain",
 }
 
 func Execute() {

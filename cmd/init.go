@@ -8,8 +8,8 @@ import (
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "init redimint service",
-	Long:  ``,
+	Short: "Initialization redimint service",
+	Long:  `Initialization redimint service, init all basic file under chain directory`,
 	Run:   initRedimint,
 }
 

@@ -21,8 +21,8 @@ import (
 
 var startCmd = &cobra.Command{
 	Use:   "start",
-	Short: "start redimint server",
-	Long:  ``,
+	Short: "Start redimint server",
+	Long:  `Start redimint server, and includes tendermint server, redis server`,
 	Run:   start,
 }
 

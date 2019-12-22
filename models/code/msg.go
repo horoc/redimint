@@ -15,9 +15,9 @@ const (
 	CodeTypeInvalidTxMsg                = ""
 	CodeTypePermissionDeniedMsg         = ""
 	CodeTypeDBPasswordIncorrectErrorMsg = "Database password incorrect"
-	CodeTypeTokenTimeoutErrorMsg        = ""
+	CodeTypeTokenTimeoutErrorMsg        = "Token timeout"
 	CodeTypeTokenInvalidErrorMsg        = "Token invalid"
-	CodeTypeIncorrectPasswordMsg        = "Token timeout"
+	CodeTypeIncorrectPasswordMsg        = ""
 	CodeTypeInternalErrorMsg            = "Redimint internal error"
 	CodeTypeGetChainGenesisErrorMsg     = ""
 )
