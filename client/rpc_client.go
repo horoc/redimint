@@ -21,3 +21,4 @@ func NewRpcClient(address string) (*RpcClient, error) {
 func (r RpcClient) Query(cmd *proto.CommandRequest) (*proto.QueryResponse, error) {
 	return r.app.Query(context.Background(), cmd)
 }
+

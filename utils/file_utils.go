@@ -4,17 +4,16 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 )
 
-const(
+const (
 	DbTxLogFilePath = "../log/db_transactions"
-	AppLogFilePath = "../log/application.log"
+	AppLogFilePath  = "../log/application.log"
 )
-
-
 
 func InitFiles() {
 	os.Remove(DbTxLogFilePath)
@@ -61,6 +60,18 @@ func ReadTxFromDBLogFile(beginHeight int, endHeight int) ([]string, error) {
 		strList = append(strList, split[0])
 	}
 	return strList, nil
+}
+
+func ReadAll(path string) string {
+	f, err := os.Open(path)
+	if err != nil {
+		return ""
+	}
+	bytes, err := ioutil.ReadAll(f)
+	if err != nil {
+		return ""
+	}
+	return string(bytes)
 }
 
 func Exists(path string) bool {
