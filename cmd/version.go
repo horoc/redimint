@@ -14,7 +14,7 @@ var (
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Get redimint version",
-	Long:  ``,
+	Long:  `Get redimint version`,
 	Run:   getVersion,
 }
 

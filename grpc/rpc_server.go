@@ -54,7 +54,7 @@ func (r RedimintService) CheckToken(c context.Context) error {
 	respCode := code.CodeTypeOK
 	respMsg := code.CodeTypeOKMsg
 
-	value := c.Value("token")
+	value := c.Value("redimint_token")
 	if value == nil {
 		respCode, respMsg = code.CodeTypeTokenInvalidError, code.CodeTypeTokenInvalidErrorMsg+" : empty"
 	}
@@ -62,7 +62,6 @@ func (r RedimintService) CheckToken(c context.Context) error {
 
 	p, _ := peer.FromContext(c)
 	addr := p.Addr.String()
-
 	claims, err := utils.ParseToken(token)
 	if err != nil {
 		switch err.(*jwt.ValidationError).Errors {

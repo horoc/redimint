@@ -6,8 +6,8 @@ import (
 
 var restartCmd = &cobra.Command{
 	Use:   "restart",
-	Short: "restart redimint server",
-	Long:  ``,
+	Short: "Restart redimint server",
+	Long:  `Restart redimint server, and includes tendermint server, redis server`,
 	Run:   restart,
 }
 
