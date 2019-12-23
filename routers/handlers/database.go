@@ -6,7 +6,7 @@ import (
 	"github.com/chenzhou9513/redimint/logger"
 	"github.com/chenzhou9513/redimint/models"
 	"github.com/chenzhou9513/redimint/models/code"
-	"github.com/chenzhou9513/redimint/utils"
+	"github.com/chenzhou9513/redimint/utils/bench_mark"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
@@ -78,7 +78,7 @@ func BenchMarkTest(c *gin.Context) {
 	request := &models.BenchMarkRequest{}
 	ginMsg.DecodeRequestBody(request)
 	fmt.Println(request)
-	mark, err := utils.NewBenchMark(request)
+	mark, err := bench_mark.NewBenchMark(request)
 	if err != nil {
 		logger.Log.Error(err)
 		return

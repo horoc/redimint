@@ -1,4 +1,4 @@
-package utils
+package bench_mark
 
 import (
 	"errors"
