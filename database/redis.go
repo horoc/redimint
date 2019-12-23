@@ -24,8 +24,8 @@ func InitRedis() {
 		"HGET", "HEXISTS", "HLEN", "HVALS", "HKEYS", "SUNION", "SCARD", "SRANDMEMBER",
 		"SMEMBERS", "SISMEMBER", "SDIFF", "ZREVRANK", "ZLEXCOUNT", "ZCARD", "ZRANK",
 		"ZRANGEBYSCORE", "ZRANGEBYLEX", "ZSCORE", "ZREVRANGEBYSCORE", "ZREVRANGE", "ZRANGE", "ZCOUNT")
-	writeCommand = hashset.New("PEXPIREAT", "RENAME", "PERSIST", "RANDOMKEY",
-		"EXPIRE", "DEL", "RENAMENX", "EXPIREAT", "SETNX", "MSET", "SETEX", "SET", "SETBIT",
+	writeCommand = hashset.New("RENAME", "PERSIST", "RANDOMKEY",
+		"DEL", "RENAMENX", "SETNX", "MSET", "SETEX", "SET", "SETBIT",
 		"DECR", "DECRBY", "MSETNX", "INCRBY", "INCRBYFLOAT", "SETRANGE", "PSETEX",
 		"APPEND", "GETSET", "INCR", "RPUSH", "RPOPLPUSH", "BLPOP", "BRPOP", "BRPOPLPUSH",
 		"LREM", "LTRIM", "LPOP", "LPUSHX", "LINSERT", "RPOP", "LSET", "LPUSH", "RPUSHX",
@@ -99,7 +99,10 @@ func ExecuteCommand(command string) (string, error) {
 
 func IsValidCmd(command string) bool {
 	split := strings.Split(command, " ")
-	if len(split) < 2 || !readOnlyCommand.Contains(strings.ToUpper(split[0])) && !writeCommand.Contains(strings.ToUpper(split[0])) {
+
+	if len(split) < 2 ||
+		!readOnlyCommand.Contains(strings.ToUpper(split[0])) && !writeCommand.Contains(strings.ToUpper(split[0])) ||
+		(strings.ToUpper(split[0]) == "SET" && len(split) > 3) {  //set expire time is not support
 		return false
 	}
 	return true
