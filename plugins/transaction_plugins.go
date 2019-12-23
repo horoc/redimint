@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"fmt"
 	"github.com/chenzhou9513/redimint/utils"
 )
 
@@ -22,9 +21,6 @@ func register(name string, plugin interface{}) {
 func GetConfigPlugin() TransactionPlugin {
 	var plugin TransactionPlugin
 	customPlugin := utils.Config.App.Plugin
-	fmt.Println("asd")
-
-	fmt.Println(customPlugin)
 	if pluginsMap == nil || !containsPlugin(customPlugin) {
 		plugin = &DefaultTransactionPlugin{}
 	} else {

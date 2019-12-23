@@ -32,6 +32,8 @@ func InitRouter() *gin.Engine {
 		chain.GET("/block", handlers.GetBlockByHeight)
 		chain.GET("/state", handlers.GetChainState)
 		chain.GET("/info", handlers.GetChainInfo)
+		chain.GET("/net", handlers.GetNetInfo)
+		chain.GET("/key_log", handlers.GetKeyLog)
 		chain.GET("/genesis", handlers.GetGenesis)
 		chain.GET("/voting_validators", handlers.GetVotingValidator)
 		chain.POST("/update_validators", handlers.UpdateValidators)

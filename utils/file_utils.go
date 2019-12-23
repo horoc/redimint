@@ -19,6 +19,7 @@ func InitFiles() {
 	os.Remove(DbTxLogFilePath)
 }
 
+//command | addr | sign | seq | height | time
 func AppendToDBLogFile(lines []string) error {
 	dbTxLogFile, err := os.OpenFile(DbTxLogFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {

@@ -10,23 +10,18 @@ import (
 	c "github.com/chenzhou9513/redimint/models/code"
 	"github.com/chenzhou9513/redimint/plugins"
 	"github.com/chenzhou9513/redimint/utils"
-	"github.com/dgraph-io/badger"
 	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/tendermint/tendermint/abci/example/code"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"go.uber.org/atomic"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
 )
 
 type LogStoreApplication struct {
-	db           *badger.DB
-	currentBatch *badger.Txn
-
 	valUpdates             []abcitypes.ValidatorUpdate
 	valAddrToPubKeyMap     map[string]abcitypes.PubKey
 	valAddrVote            Vote
@@ -55,16 +50,10 @@ const PrivateSep string = "_"
 const VoteKeySep string = ":"
 
 const SocketAddr string = "unix://tendermint.sock"
-const BadgerPath string = "/tmp/badger"
+const BadgerPath string = "../badger"
 
 func InitLogStoreApplication() {
-	logDb, err := badger.Open(badger.DefaultOptions(BadgerPath))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to open badger db: %v", err)
-		os.Exit(1)
-	}
 	LogStoreApp = &LogStoreApplication{
-		db:                     logDb,
 		valAddrToPubKeyMap:     make(map[string]abcitypes.PubKey),
 		valAddrVote:            NewVote(),
 		committedValidatorVote: NewVote(),
@@ -170,6 +159,7 @@ func (app *LogStoreApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.
 
 //#################### BeginBlock ####################
 func (app *LogStoreApplication) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.ResponseBeginBlock {
+
 	if app.pauseFlag == true {
 		app.wg.Wait()
 	}
@@ -283,28 +273,28 @@ func (app *LogStoreApplication) QueryVotingValidators() *Vote {
 }
 
 func (app *LogStoreApplication) Query(reqQuery abcitypes.RequestQuery) (resQuery abcitypes.ResponseQuery) {
-	resQuery.Key = reqQuery.Data
-	err := app.db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(reqQuery.Data)
-		if err != nil && err != badger.ErrKeyNotFound {
-			logger.Log.Error(err)
-			return err
-		}
-		if err == badger.ErrKeyNotFound {
-			resQuery.Log = "does not exist"
-		} else {
-			return item.Value(func(val []byte) error {
-				resQuery.Log = "exists"
-				resQuery.Value = val
-				return nil
-			})
-		}
-		return nil
-	})
-	if err != nil {
-		logger.Log.Error(err)
-		panic(err)
-	}
+	//resQuery.Key = reqQuery.Data
+	//err := app.db.View(func(txn *badger.Txn) error {
+	//	item, err := txn.Get(reqQuery.Data)
+	//	if err != nil && err != badger.ErrKeyNotFound {
+	//		logger.Log.Error(err)
+	//		return err
+	//	}
+	//	if err == badger.ErrKeyNotFound {
+	//		resQuery.Log = "does not exist"
+	//	} else {
+	//		return item.Value(func(val []byte) error {
+	//			resQuery.Log = "exists"
+	//			resQuery.Value = val
+	//			return nil
+	//		})
+	//	}
+	//	return nil
+	//})
+	//if err != nil {
+	//	logger.Log.Error(err)
+	//	panic(err)
+	//}
 	return
 }
 
@@ -312,7 +302,7 @@ func (app *LogStoreApplication) updateValidator(v abcitypes.ValidatorUpdate) abc
 
 	pubkey := ed25519.PubKeyEd25519{}
 	copy(pubkey[:], v.PubKey.Data)
-	val := app.getBadgerVal([]byte("val:" + string(v.PubKey.Data)))
+	val := database.GetBadgerVal([]byte("val:" + string(v.PubKey.Data)))
 
 	if v.Power == 0 {
 		// remove validator
@@ -322,7 +312,7 @@ func (app *LogStoreApplication) updateValidator(v abcitypes.ValidatorUpdate) abc
 				Code: c.CodeTypeEncodingError,
 				Log:  c.CodeTypeEncodingErrorMsg + " : " + pubStr}
 		}
-		app.deleteBadgerKey([]byte("val:" + string(v.PubKey.Data)))
+		database.DeleteBadgerKey([]byte("val:" + string(v.PubKey.Data)))
 		delete(app.valAddrToPubKeyMap, pubkey.Address().String())
 	} else {
 		// add or update validator
@@ -332,7 +322,7 @@ func (app *LogStoreApplication) updateValidator(v abcitypes.ValidatorUpdate) abc
 				Code: c.CodeTypeEncodingError,
 				Log:  c.CodeTypeEncodingErrorMsg + " : " + err.Error()}
 		}
-		app.updateBadgerVal([]byte("val:"+string(v.PubKey.Data)), value.Bytes())
+		database.UpdateBadgerVal([]byte("val:"+string(v.PubKey.Data)), value.Bytes())
 		app.valAddrToPubKeyMap[pubkey.Address().String()] = v.PubKey
 	}
 
@@ -381,41 +371,4 @@ func (app *LogStoreApplication) IsPrivateCommand(commitBody models.TxCommitBody)
 		return true
 	}
 	return false
-}
-
-func (app *LogStoreApplication) updateBadgerVal(key []byte, val []byte) error {
-	txn := app.db.NewTransaction(true)
-	if err := txn.Set(key, val); err == nil {
-		_ = txn.Commit()
-	} else {
-		return err
-	}
-	return nil
-}
-
-func (app *LogStoreApplication) deleteBadgerKey(key []byte) error {
-	txn := app.db.NewTransaction(true)
-	if err := txn.Delete(key); err == nil {
-		_ = txn.Commit()
-	} else {
-		return err
-	}
-	return nil
-}
-
-func (app *LogStoreApplication) getBadgerVal(key []byte) []byte {
-	var value []byte
-	app.db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(key)
-		if err != nil {
-			return err
-		} else {
-			return item.Value(func(val []byte) error {
-				value = val
-				return nil
-			})
-		}
-		return nil
-	})
-	return value
 }

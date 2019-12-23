@@ -309,6 +309,20 @@ func (s ApplicationService) GetGenesis() (*models.Genesis, error) {
 	}, nil
 }
 
+func (s ApplicationService) GetNetInfo() (*models.NetInfo, error) {
+	resultNetInfo, err := GetNetInfo()
+	if err != nil {
+		return nil, err
+	}
+	netInfo := &models.NetInfo{}
+	utils.JsonToStruct(utils.StructToJson(resultNetInfo), netInfo)
+	return netInfo, nil
+}
+
+func (s ApplicationService) GetKeyLog(key string) (*models.OperationKeyLog, error) {
+	return database.GetKeyWriteLog(key)
+}
+
 func (s ApplicationService) QueryVotingValidators() *Vote {
 	return LogStoreApp.QueryVotingValidators()
 }
@@ -365,11 +379,31 @@ func (s ApplicationService) StartCommandLogWriter() {
 		case resultEvent := <-out:
 			block := resultEvent.Data.(types.EventDataNewBlock).Block
 			strList := s.ConvertTransactionsToLogString(block.Txs, block.Height, block.Time.String())
+			logList := s.ConvertTransactionsToCommandLog(block.Txs, block.Height, block.Time.String())
 			lock.Lock()
 			utils.AppendToDBLogFile(strList)
+			database.UpdateKeyWriteLog(logList)
 			lock.Unlock()
 		}
 	}
+}
+
+func (s ApplicationService) ConvertTransactionsToCommandLog(txs types.Txs, h int64, time string) []models.OperationLog {
+	operationLog := make([]models.OperationLog, 0)
+	for _, v := range txs {
+		data := &models.TxCommitBody{}
+		utils.JsonToStruct(v, data)
+		operationLog = append(operationLog,
+			models.OperationLog{
+				Operation: data.Data.Operation,
+				Address:   data.Address,
+				Signature: data.Signature,
+				Sequence:  data.Data.Sequence,
+				Height:    strconv.Itoa(int(h)),
+				Time:      time,
+			})
+	}
+	return operationLog
 }
 
 func (s ApplicationService) ConvertTransactionsToLogString(txs types.Txs, h int64, time string) []string {

@@ -110,6 +110,16 @@ func GetChainState() (*ctypes.ResultStatus, error) {
 	return resultStatus, nil
 }
 
+func GetNetInfo() (*ctypes.ResultNetInfo, error) {
+	resultNetInfo, err := tendermintHttpClient.NetInfo()
+	if err != nil {
+		err = fmt.Errorf("get net info error : %s", err)
+		logger.Log.Error(err)
+		return nil, err
+	}
+	return resultNetInfo, nil
+}
+
 func GetBlockFromHeight(h int64) (*ctypes.ResultBlock, error) {
 
 	logger.Log.Info("Tendermint GetBlockFromHeight : " + strconv.Itoa(int(h)))

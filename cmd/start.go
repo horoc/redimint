@@ -48,6 +48,7 @@ func InitService() {
 	core.InitService()
 	logger.InitLogger()
 	database.InitRedis()
+	database.InitBadgerDB()
 	core.InitLogStoreApplication()
 }
 

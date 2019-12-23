@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"github.com/chenzhou9513/redimint/utils"
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/types"
 	"github.com/tendermint/tendermint/version"
@@ -213,6 +214,52 @@ type ValidatorParams struct {
 	PubKeyTypes []string `json:"pub_key_types"`
 }
 
+//net info
+type NetInfo struct {
+	Listening bool     `json:"listening"`
+	Listeners []string `json:"listeners"`
+	NPeers    int      `json:"n_peers"`
+	Peers     []Peer   `json:"peers"`
+}
+
+type Peer struct {
+	NodeInfo         NodeInfo         `json:"node_info"`
+	IsOutbound       bool             `json:"is_outbound"`
+	ConnectionStatus ConnectionStatus `json:"connection_status"`
+	RemoteIP         string           `json:"remote_ip"`
+}
+
+type ConnectionStatus struct {
+	Duration    time.Duration
+	SendMonitor Status
+	RecvMonitor Status
+	Channels    []ChannelStatus
+}
+
+type Status struct {
+	Active   bool          // Flag indicating an active transfer
+	Start    time.Time     // Transfer start time
+	Duration time.Duration // Time period covered by the statistics
+	Idle     time.Duration // Time since the last transfer of at least 1 byte
+	Bytes    int64         // Total number of bytes transferred
+	Samples  int64         // Total number of samples taken
+	InstRate int64         // Instantaneous transfer rate
+	CurRate  int64         // Current transfer rate (EMA of InstRate)
+	AvgRate  int64         // Average transfer rate (Bytes / Duration)
+	PeakRate int64         // Maximum instantaneous transfer rate
+	BytesRem int64         // Number of bytes remaining in the transfer
+	TimeRem  time.Duration // Estimated time to completion
+	Progress utils.Percent // Overall transfer progress
+}
+
+type ChannelStatus struct {
+	ID                byte
+	SendQueueCapacity int
+	SendQueueSize     int
+	Priority          int
+	RecentlySent      int64
+}
+
 //bench mark
 type BenchMarkRequest struct {
 	TxNums       int    `json:"tx_nums"`
@@ -231,4 +278,19 @@ type BenchMarkDetail struct {
 	Avg   string
 	Max   string
 	Stdev string
+}
+
+//badger
+type OperationKeyLog struct {
+	Key          string         `json:"key"`
+	OperationLog []OperationLog `json:"command_log"`
+}
+
+type OperationLog struct {
+	Operation string `json:"operation"`
+	Address   string `json:"address"`
+	Signature string `json:"signature"`
+	Time      string `json:"time"`
+	Height    string `json:"height"`
+	Sequence  string `json:"sequence"`
 }
