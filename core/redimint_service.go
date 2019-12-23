@@ -19,6 +19,8 @@ type Service interface {
 	GetChainState() (*models.ChainState, error)
 	GetTransaction(hash string) (*models.Transaction, error)
 	GetCommittedTxList(beginHeight int, endHeight int) (*models.TransactionCommittedList, error)
+	GetNetInfo() (*models.NetInfo, error)
+	GetKeyLog(key string) (*models.OperationKeyLog, error)
 
 	//validators
 	QueryVotingValidators() *Vote

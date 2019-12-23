@@ -49,6 +49,9 @@ clean:
 
 .PHONY: reinit
 reinit:
+	@rm -rf $(OUTPUT_LOG)
+	@rm -rf $(OUTPUT_DATA)
+	@mkdir $(OUTPUT_LOG)
 	@tendermint init --home=$(OUTPUT_DATA)
 
 .PHONY: reinstall

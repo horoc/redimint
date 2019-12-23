@@ -62,6 +62,25 @@ func GetChainInfo(c *gin.Context) {
 	ginMsg.SuccessWithData(res)
 }
 
+func GetNetInfo(c *gin.Context) {
+	ginMsg := models.GinMsg{C: c}
+	res, err := core.AppService.GetNetInfo()
+	if err != nil {
+		ginMsg.Error(http.StatusOK, code.CodeTypeGetChainInfoError, code.CodeTypeGetChainInfoErrorMsg, err)
+	}
+	ginMsg.SuccessWithData(res)
+}
+
+func GetKeyLog(c *gin.Context) {
+	ginMsg := models.GinMsg{C: c}
+	key := c.Query("key")
+	res, err := core.AppService.GetKeyLog(key)
+	if err != nil {
+		ginMsg.Error(http.StatusOK, code.CodeTypeGetChainInfoError, code.CodeTypeGetChainInfoErrorMsg, err)
+	}
+	ginMsg.SuccessWithData(res)
+}
+
 func GetGenesis(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
 	res, err := core.AppService.GetGenesis()
