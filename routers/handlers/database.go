@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/chenzhou9513/redimint/benchmark"
 	"github.com/chenzhou9513/redimint/core"
 	"github.com/chenzhou9513/redimint/logger"
 	"github.com/chenzhou9513/redimint/models"
 	"github.com/chenzhou9513/redimint/models/code"
+	"github.com/chenzhou9513/redimint/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
@@ -78,7 +78,7 @@ func BenchMarkTest(c *gin.Context) {
 	request := &models.BenchMarkRequest{}
 	ginMsg.DecodeRequestBody(request)
 	fmt.Println(request)
-	mark, err := benchmark.NewBenchMark(request)
+	mark, err := utils.NewBenchMark(request)
 	if err != nil {
 		logger.Log.Error(err)
 		return
