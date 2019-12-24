@@ -71,6 +71,15 @@ func GetNetInfo(c *gin.Context) {
 	ginMsg.SuccessWithData(res)
 }
 
+func GetUnconfirmedTxs(c *gin.Context){
+	ginMsg := models.GinMsg{C: c}
+	res, err := core.AppService.GetUnconfirmedTxs()
+	if err != nil {
+		ginMsg.Error(http.StatusOK, code.CodeTypeGetChainInfoError, code.CodeTypeGetChainInfoErrorMsg, err)
+	}
+	ginMsg.SuccessWithData(res)
+}
+
 func GetKeyLog(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
 	key := c.Query("key")

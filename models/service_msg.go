@@ -214,6 +214,13 @@ type ValidatorParams struct {
 	PubKeyTypes []string `json:"pub_key_types"`
 }
 
+type UnConfirmedTxs struct {
+	Count      int            `json:"n_txs"`
+	Total      int            `json:"total"`
+	TotalBytes int64          `json:"total_bytes"`
+	Txs        []TxCommitBody `json:"txs"`
+}
+
 //net info
 type NetInfo struct {
 	Listening bool     `json:"listening"`

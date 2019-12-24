@@ -7,11 +7,8 @@ const (
 	CodeTypeEncodingError
 	CodeTypeRedimintQueryError
 	CodeTypeRedimintExecuteError
-	CodeTypeTxExeCommitError
-	CodeTypeTxExeSyncError
 	CodeTypeGetChainInfoError
 	CodeTypeInvalidExecuteMode
-	CodeTypeInvalidRedisCommand
 	CodeTypeInvalidTx
 	CodeTypePermissionDenied
 	CodeTypeDBPasswordIncorrectError
@@ -19,5 +16,4 @@ const (
 	CodeTypeTokenInvalidError
 	CodeTypeIncorrectPassword
 	CodeTypeInternalError
-	CodeTypeGetChainGenesisError
 )

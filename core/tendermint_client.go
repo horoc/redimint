@@ -120,6 +120,16 @@ func GetNetInfo() (*ctypes.ResultNetInfo, error) {
 	return resultNetInfo, nil
 }
 
+func GetUnconfirmedTxs() (*ctypes.ResultUnconfirmedTxs, error) {
+	resultUnconfirmedTxs, err := tendermintHttpClient.NumUnconfirmedTxs()
+	if err != nil {
+		err = fmt.Errorf("get unconfirmed txs error : %s", err)
+		logger.Log.Error(err)
+		return nil, err
+	}
+	return resultUnconfirmedTxs, nil
+}
+
 func GetBlockFromHeight(h int64) (*ctypes.ResultBlock, error) {
 
 	logger.Log.Info("Tendermint GetBlockFromHeight : " + strconv.Itoa(int(h)))

@@ -319,6 +319,25 @@ func (s ApplicationService) GetNetInfo() (*models.NetInfo, error) {
 	return netInfo, nil
 }
 
+func (s ApplicationService) GetUnconfirmedTxs() (*models.UnConfirmedTxs, error) {
+	resultUnconfirmedTxs, err := GetUnconfirmedTxs()
+	if err != nil {
+		return nil, err
+	}
+	txs := models.UnConfirmedTxs{}
+	utils.JsonToStruct(utils.StructToJson(resultUnconfirmedTxs), txs)
+
+	txList := make([]models.TxCommitBody, 0)
+
+	for _, tx := range resultUnconfirmedTxs.Txs {
+		data := &models.TxCommitBody{}
+		utils.JsonToStruct(tx, data)
+		txList = append(txList, *data)
+	}
+	txs.Txs = txList
+	return &txs, nil
+}
+
 func (s ApplicationService) GetKeyLog(key string) (*models.OperationKeyLog, error) {
 	return database.GetKeyWriteLog(key)
 }
