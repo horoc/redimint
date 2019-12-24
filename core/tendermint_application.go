@@ -34,7 +34,7 @@ type LogStoreApplication struct {
 
 	logSize atomic.Int64
 
-	plugin plugins.TransactionPlugin
+	plugin plugins.BlockChainPlugin
 
 	initFlag bool
 
@@ -124,6 +124,7 @@ func (app *LogStoreApplication) InitChain(req abcitypes.RequestInitChain) abcity
 			logger.Log.Error(r)
 		}
 	}
+	app.plugin.CustomChainInitMethod()
 	return abcitypes.ResponseInitChain{}
 }
 

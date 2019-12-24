@@ -1,28 +1,31 @@
 package plugins
 
 import (
+	"github.com/chenzhou9513/redimint/models"
 	"github.com/chenzhou9513/redimint/utils"
 )
 
-var pluginsMap map[string]TransactionPlugin
+var pluginsMap map[string]BlockChainPlugin
 
-type TransactionPlugin interface {
+type BlockChainPlugin interface {
+	CustomChainInitMethod()
+	CustomNewBlockEventMethod(block *models.Block)
 	CustomTxValidationCheck(tx []byte) (bool, string)
 	CustomTransactionDeliverLog(tx []byte, result string) string
 }
 
 func register(name string, plugin interface{}) {
 	if pluginsMap == nil {
-		pluginsMap = make(map[string]TransactionPlugin, 0)
+		pluginsMap = make(map[string]BlockChainPlugin, 0)
 	}
-	pluginsMap[name] = plugin.(TransactionPlugin)
+	pluginsMap[name] = plugin.(BlockChainPlugin)
 }
 
-func GetConfigPlugin() TransactionPlugin {
-	var plugin TransactionPlugin
+func GetConfigPlugin() BlockChainPlugin {
+	var plugin BlockChainPlugin
 	customPlugin := utils.Config.App.Plugin
 	if pluginsMap == nil || !containsPlugin(customPlugin) {
-		plugin = &DefaultTransactionPlugin{}
+		plugin = &DefaultBlockChainPlugin{}
 	} else {
 		plugin = pluginsMap[customPlugin]
 	}

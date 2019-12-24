@@ -383,6 +383,7 @@ func (s ApplicationService) StartCommandLogWriter() {
 			lock.Lock()
 			utils.AppendToDBLogFile(strList)
 			database.UpdateKeyWriteLog(logList)
+			LogStoreApp.plugin.CustomNewBlockEventMethod(s.ConvertBlockFromTypesBlock(block))
 			lock.Unlock()
 		}
 	}
@@ -469,6 +470,27 @@ func (s ApplicationService) ConvertCommitSign(b *types.CommitSig) *models.Commit
 		ValidatorIndex:   b.ValidatorIndex,
 		Signature:        utils.ByteToHex(b.Signature),
 	}
+}
+
+func (s ApplicationService) ConvertBlockFromTypesBlock(b *types.Block) *models.Block {
+	header := s.ConvertBlockHeader(&(b.Header))
+
+	data := s.ConvertBlockData(&(b.Data))
+
+	lastCommit := make([]*models.CommitSig, 0)
+
+	for _, v := range b.LastCommit.Precommits {
+		lastCommit = append(lastCommit, s.ConvertCommitSign(v))
+	}
+
+	block := &models.Block{
+		BlockID:    models.BlockID{},
+		Header:     *header,
+		Data:       *data,
+		Evidence:   b.Evidence,
+		LastCommit: lastCommit,
+	}
+	return block
 }
 
 func (s ApplicationService) ConvertBlock(b *ctypes.ResultBlock) *models.Block {
