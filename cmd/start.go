@@ -11,11 +11,8 @@ import (
 	"github.com/spf13/cobra"
 	abciserver "github.com/tendermint/tendermint/abci/server"
 	tlog "github.com/tendermint/tendermint/libs/log"
-	"log"
 	"os"
-	"os/exec"
 	"os/signal"
-	"strconv"
 	"syscall"
 )
 
@@ -26,16 +23,13 @@ var startCmd = &cobra.Command{
 	Run:   start,
 }
 
-const (
-	TDPID_FILE = "./.tendermint_pid"
-	RDPID_FILE = "./.redimint_pid"
-	DBPID_FILE = "./.redis_pid"
-)
-
 var daemon bool
+var alone bool
 
 func init() {
 	startCmd.Flags().BoolVarP(&daemon, "daemon", "d", false, "redimint start mode")
+	startCmd.Flags().BoolVarP(&alone, "alone", "a", false, "start redimint server alone")
+
 	rootCmd.AddCommand(startCmd)
 }
 
@@ -47,30 +41,38 @@ func InitService() {
 	core.InitClient()
 	core.InitService()
 	logger.InitLogger()
-	database.InitRedis()
+	database.InitRedisClient()
 	database.InitBadgerDB()
 	core.InitLogStoreApplication()
+
+	core.InitAllJobs()
 }
 
 func start(cmd *cobra.Command, args []string) {
 	if daemon {
-		startTendermintDaemon()
-		startRedisDaemon()
-		startRedimintDaemon()
+		utils.StartRedisDaemon()
+		utils.StartRedimintDaemon()
+		utils.StartTendermintDaemon()
 		os.Exit(0)
 	}
-	startTendermintDaemon()
-	startRedisDaemon()
+	if !alone {
+		utils.StartRedisDaemon()
+	}
 	InitService()
 	logger := tlog.NewTMLogger(tlog.NewSyncWriter(os.Stdout))
 	server := abciserver.NewSocketServer(core.SocketAddr, core.LogStoreApp)
 	server.SetLogger(logger)
+	if !alone {
+		utils.StartTendermintDaemon()
+	}
+
 	if err := server.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, "error starting socket server: %v", err)
 		os.Exit(1)
 	}
 	defer server.Stop()
 
+	core.StartAllJobs()
 	appServer := network.NewServer()
 	appServer.Start()
 
@@ -78,48 +80,4 @@ func start(cmd *cobra.Command, args []string) {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
 	os.Exit(0)
-}
-
-func startRedimintDaemon() {
-	cmd := exec.Command("./redimint", "start")
-	cmd.Start()
-	fmt.Println("Redimint daemon process ID is : ", cmd.Process.Pid)
-	savePID(cmd.Process.Pid, RDPID_FILE)
-}
-
-func startTendermintDaemon() {
-	utils.DeleteFile("tendermint.sock")
-	cmdStr := `nohup tendermint --home=../chain node --proxy_app=unix://tendermint.sock > ../log/tendermint.log 2>&1 &`
-	cmd := exec.Command("bash", "-c", cmdStr)
-	cmd.Start()
-	fmt.Println("Tendermint daemon process ID is : ", cmd.Process.Pid)
-	savePID(cmd.Process.Pid, TDPID_FILE)
-}
-
-func startRedisDaemon() {
-	cmdStr := `nohup redis-server ../conf/redis.conf > ../log/redis.log 2>&1 &`
-	cmd := exec.Command("bash", "-c", cmdStr)
-	cmd.Start()
-	fmt.Println("Redis daemon process ID is : ", cmd.Process.Pid)
-	savePID(cmd.Process.Pid, DBPID_FILE)
-}
-
-func savePID(pid int, pidFile string) {
-
-	file, err := os.Create(pidFile)
-	if err != nil {
-		log.Printf("Unable to create pid file : %v\n", err)
-		os.Exit(1)
-	}
-
-	defer file.Close()
-
-	_, err = file.WriteString(strconv.Itoa(pid))
-
-	if err != nil {
-		log.Printf("Unable to create pid file : %v\n", err)
-		os.Exit(1)
-	}
-
-	file.Sync()
 }

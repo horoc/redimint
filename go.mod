@@ -12,6 +12,7 @@ require (
 	github.com/go-redis/redis v6.15.6+incompatible
 	github.com/golang/protobuf v1.3.2
 	github.com/ipfs/go-ipfs-api v0.0.2
+	github.com/jasonlvhit/gocron v0.0.0-20191216013803-9b1e2c8fb35c
 	github.com/json-iterator/go v1.1.8 // indirect
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.10 // indirect

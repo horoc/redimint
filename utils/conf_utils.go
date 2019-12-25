@@ -23,8 +23,6 @@ type RedisConfig struct {
 	Db       int    `yaml:"db"`
 	Password string `yaml:"password"`
 	RDBPath  string `yaml:"rdb_path"`
-	RedisBin string `yaml:"redis_bin"`
-	ConfPath string `yaml:"conf_path"`
 }
 
 type TendermintConfig struct {

@@ -6,5 +6,5 @@ dump.rdb
 tendermint.sock
 chain
 db_transactions
-redimint_home
+redimint_home/*
 service.sh

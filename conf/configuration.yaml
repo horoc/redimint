@@ -3,15 +3,13 @@ app-config:
   db_password: App@1234
   admin_user: admin
   admin_passowrd: admin
-# plugin: default
+  plugin: default
 
 redis-config:
   url: 127.0.0.1:6379
   db: 0
   password: Redis@1234
   rdb_path: ./dump.rdb
-  redis_bin: redis-server
-  conf_path: ./conf/redis/redis.conf
 
 tendermint-config:
   url: 127.0.0.1:26657

@@ -7,7 +7,6 @@ import (
 	"github.com/chenzhou9513/redimint/utils"
 	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/go-redis/redis"
-	"os/exec"
 	"strings"
 	"time"
 )
@@ -16,8 +15,7 @@ var Client *redis.Client
 var readOnlyCommand *hashset.Set
 var writeCommand *hashset.Set
 
-func InitRedis() {
-	StartRedisServer()
+func InitRedisClient() {
 	Client = NewRedisClient()
 	readOnlyCommand = hashset.New("INFO", "TYPE", "TTL", "KEYS", "GETRANGE",
 		"GET", "GETBIT", "STRLEN", "MGET", "LINDEX", "LRANGE", "LLEN", "HMGET", "HGETALL",
@@ -40,9 +38,19 @@ func NewRedisClient() *redis.Client {
 		Password: utils.Config.Redis.Password,
 		DB:       utils.Config.Redis.Db,
 	})
-	pong, err := client.Ping().Result()
-	fmt.Println(pong, err)
 	return client
+}
+
+func CheckAlive(retryTime int) bool {
+	_, err := Client.Ping().Result()
+	if err != nil {
+		retryTime--
+		if retryTime == 0 {
+			return false
+		}
+		return CheckAlive(retryTime)
+	}
+	return true
 }
 
 func RestartRedisServer() {
@@ -54,18 +62,20 @@ func RestartRedisServer() {
 }
 
 func StopRedis() {
-	status := Client.Shutdown()
-	if status.Err() != nil {
-		logger.Log.Error(status.Err())
+	if IsRunning() {
+		status := Client.Shutdown()
+		if status.Err() != nil {
+			logger.Log.Error(status.Err())
+		}
+	} else {
+		pid := utils.ReadAll(utils.DBPID_FILE)
+		utils.StopPID(pid)
 	}
+	utils.DeleteFile(utils.DBPID_FILE)
 }
 
 func StartRedisServer() {
-	cmd := exec.Command(utils.Config.Redis.RedisBin, utils.Config.Redis.ConfPath)
-	err := cmd.Run()
-	if err != nil {
-		logger.Log.Error(err)
-	}
+	utils.StartRedisDaemon()
 }
 
 func IsRunning() bool {
@@ -102,7 +112,7 @@ func IsValidCmd(command string) bool {
 
 	if len(split) < 2 ||
 		!readOnlyCommand.Contains(strings.ToUpper(split[0])) && !writeCommand.Contains(strings.ToUpper(split[0])) ||
-		(strings.ToUpper(split[0]) == "SET" && len(split) > 3) {  //set expire time is not support
+		(strings.ToUpper(split[0]) == "SET" && len(split) > 3) { //set expire time is not support
 		return false
 	}
 	return true

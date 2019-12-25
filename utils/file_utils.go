@@ -75,6 +75,23 @@ func ReadAll(path string) string {
 	return string(bytes)
 }
 
+func ReadPIDFile(path string) string {
+	f, err := os.Open(path)
+	if err != nil {
+		return ""
+	}
+	br := bufio.NewReader(f)
+
+	defer f.Close()
+
+	line, _, err := br.ReadLine()
+
+	if err != nil {
+		return ""
+	}
+	return string(line)
+}
+
 func Exists(path string) bool {
 	_, err := os.Stat(path)
 	if err == nil {
