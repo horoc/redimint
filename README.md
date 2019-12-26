@@ -1,8 +1,7 @@
 
-![](https://chenzhou-images.oss-cn-shanghai.aliyuncs.com/redimint.png)
+<p align="center"><img src="https://chenzhou-images.oss-cn-shanghai.aliyuncs.com/redimint.png" /></p>
 
-
-`Redimint` 是基于 `Redis` 和 `Tendermint` 区块链中间件的去中心化KV数据库系统。
+<p align="center"> Redimint 是基于 Redis 和 Tendermint 区块链中间件的去中心化KV数据库系统。</p>
 
 ## 概述 
 
