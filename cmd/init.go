@@ -9,7 +9,7 @@ import (
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialization redimint service",
-	Long:  `Initialization redimint service, init all basic file under chain directory`,
+	Long:  "Description:\n  Initialization redimint service, init all basic file under chain directory.",
 	Run:   initRedimint,
 }
 

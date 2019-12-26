@@ -8,7 +8,7 @@ import (
 var stopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "Stop redimint server",
-	Long:  `Stop redimint server, and includes tendermint server, redis server`,
+	Long:  "Description:\n  Stop redimint server, and includes tendermint server, redis server.",
 	Run:   stop,
 }
 

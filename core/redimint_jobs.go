@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"github.com/chenzhou9513/redimint/database"
 	"github.com/jasonlvhit/gocron"
 )
@@ -15,9 +14,7 @@ func InitAllJobs() {
 
 func CheckRedisStatus() {
 	isAlive := database.CheckAlive(3)
-	fmt.Println("alive")
 	if !isAlive {
-		fmt.Println("not alive")
 		err := AppService.RestoreLocalDatabase()
 		if err != nil {
 			return
