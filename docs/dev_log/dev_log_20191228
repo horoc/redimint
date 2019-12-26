@@ -1,0 +1,59 @@
+## 整体架构
+1. 存储： 
+    1. 主存储： redis
+    2. 区块链： tendermint
+    3. 辅助存储：badger，为了让redis仅存储业务数据，将redimint运行中一些需要维护的本地数据存在badger本地文件数据库上
+    4. 可能涉及ipfs，不一定上。
+2. 服务：
+    1. redimint服务与tendermint交互:  本地socket + websocket。
+    2. gin做http服务, 包含授权、链信息查询、validator更新、数据操作。
+    3. gRPC做客户端服务，包括授权、数据操作。目标客户端支持语言go、java。
+3. 读模型：由http服务，或是gRPC客户端筛选请求，将读请求与写请求分离。读请求直接访问数据库。
+4. 写共识模型：
+    1. Commit模式：先共识再写redis， 由tendermint共识后生成区块，后通过socket调用服务接口，redimint服务解析后写数据库。
+    2. Private模式：以限定redis key的形式异步调用，优化写性能。
+        1. Key形式："发起者address”_“操作key”
+        2. 不同address对private key只有读权限，没有写权限
+        3. 调用tendermint的Sync请求，即先写入tendermint的Mempool, 后调用Check接口，由Tendermint的Check接口执行写操作后返回，不涉及任何网络调用。Private写模式由tendermint的Mempool模块来保证Transaction在本节点不是拜占庭节点的情况下一定会写入区块。
+    3. Async模式：完全异步模式，不返回数据库执行结果。指令真正执行的时间是在区块生成后。适用于不需要立刻返回结果的指令。如废弃key的删除操作。
+5. 插件化：将整体写流程的关键点设置可配置插件化组件，用户可定制化某些关键环节，如指令筛选，执行日志等。
+6. 高可用：
+    1. redis宕机： 提供通过日志文件重启恢复redis的服务
+    2. tendermint服务宕机： 重启tendermint，tendermint会自动同步增量的Transaction
+    3. redimint服务宕机：重启redimint，由badger中维护的信息恢复到最新状态
+7. 运行方式：
+    1. 目前只考虑以进程形式运行，因为涉及多个不同的服务和组件，暂不考虑docker
+    2. 用cobra做可执行程序的打包工具
+8. 测试：
+    1. 暂定用JMeter通过http接口访问，主要测试性能。
+9. 可视化：
+    1. 不一定做，类似dashboard的功能， 以web形式展示，暂定框架是react+ant design。
+
+## 进展
+1. 环境搭建，打通tendermint和redimint的socket通信。
+2. 基于gin的http服务搭建完成。
+3. Gin中间件部分，包括授权，日志等。
+4. 完成区块链侧的接口：
+    1. GetBlock(height int) (*models.Block, error)
+    2. GetGenesis() (*models.Genesis, error)
+    3. GetChainInfo(min int, max int) (*models.ChainInfo, error)
+    4. GetChainState() (*models.ChainState, error)
+    5. GetTransaction(hash string) (*models.Transaction, error)
+5. 完成核心写链路的执行接口，除Private模式还在开发测试：
+    1. Query(request *models.CommandRequest) (*models.QueryResponse, error)
+    2. Execute(request *models.CommandRequest) (*models.ExecuteResponse, error)
+    3. ExecuteAsync(request *models.CommandRequest) (*models.ExecuteAsyncResponse, error)
+6. 完成部分插件化模块的实现。
+7. gRPC服务搭建完成。
+8. Go 版本grpc 客户端搭建完成。
+9. Cobra打包相关内容搭建，待优化信息提示。
+10. Node、Validator加密工具包开发完成。
+11. Badger工具包开发完成。
+12. Redimint初始化逻辑完成。
+
+## 计划1228-0111：
+1. 优先完成Private模式的开发工作，包括读，写侧。
+2. 完成所有插件包模块。
+3. 完成Validator update的功能。
+4. 完成Redis高可用部分。
+5. 部分前端内容
