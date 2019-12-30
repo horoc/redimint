@@ -50,7 +50,6 @@ const PrivateSep string = "_"
 const VoteKeySep string = ":"
 
 const SocketAddr string = "unix://tendermint.sock"
-const BadgerPath string = "../badger"
 
 func InitLogStoreApplication() {
 	LogStoreApp = &LogStoreApplication{
