@@ -161,12 +161,11 @@ func (s ApplicationService) QueryPrivateDataWithAddress(request *models.QueryPri
 }
 
 func (s ApplicationService) RestoreLocalDatabase() error {
-	txs, err := utils.ReadTxFromDBLogFile(2, int(LogStoreApp.currentHeight))
+	txs, err := utils.ReadTxFromDBLogFile(2, int(LogStoreApp.State.GetCurrentHeight()))
 	if err != nil {
 		logger.Log.Error(err)
 		return err
 	}
-	LogStoreApp.Pause()
 	database.RestartRedisServer()
 	logger.Log.Info("Restore Local Database Begin ... ")
 	for _, c := range txs {
@@ -174,7 +173,6 @@ func (s ApplicationService) RestoreLocalDatabase() error {
 		logger.Log.Info("Restore Execute command: " + c)
 	}
 	logger.Log.Info("Restore Local Database Finished... ")
-	LogStoreApp.Continue()
 	return nil
 }
 

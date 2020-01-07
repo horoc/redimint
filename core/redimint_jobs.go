@@ -9,23 +9,25 @@ var Schedulers *gocron.Scheduler
 
 func InitAllJobs() {
 	Schedulers = gocron.NewScheduler()
-	Schedulers.Every(10).Seconds().Do(CheckRedisStatus)
+	Schedulers.Every(1).Seconds().Do(CheckRedisStatus)
 }
 
 func CheckRedisStatus() {
 	isAlive := database.CheckAlive(3)
 	if !isAlive {
+		LogStoreApp.State.lock.Lock()
 		err := AppService.RestoreLocalDatabase()
 		if err != nil {
 			return
 		}
+		LogStoreApp.State.UnLock()
 	}
 }
 
-func StartAllJobs(){
+func StartAllJobs() {
 	Schedulers.Start()
 }
 
-func StopAllJobs(){
+func StopAllJobs() {
 	Schedulers.Clear()
 }

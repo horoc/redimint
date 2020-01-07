@@ -66,10 +66,12 @@ func QueryPrivateCommand(c *gin.Context) {
 
 func RestoreLocalDatabase(c *gin.Context) {
 	ginMsg := models.GinMsg{C: c}
+	core.LogStoreApp.State.Lock()
 	err := core.AppService.RestoreLocalDatabase()
 	if err != nil {
 		ginMsg.Error(http.StatusOK, code.CodeTypeInternalError, code.CodeTypeInternalErrorMsg, err)
 	}
+	core.LogStoreApp.State.UnLock()
 	ginMsg.Success()
 }
 
