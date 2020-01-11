@@ -1,0 +1,22 @@
+## 进展：
+1. 完成所有读写模式执行流程。Private, Async, Commit， 包括读，写测所有接口。
+	1. Query(request *models.CommandRequest) (*models.QueryResponse, error)
+	2. QueryPrivateData(request *models.CommandRequest) (*models.QueryResponse, error)
+	3. QueryPrivateDataWithAddress(request *models.QueryPrivateWithAddrRequest) (*models.QueryResponse, error)
+	4. Execute(request *models.CommandRequest) (*models.ExecuteResponse, error)
+	5. ExecuteAsync(request *models.CommandRequest) (*models.ExecuteAsyncResponse, error)
+	6. ExecuteWithPrivateKey(request *models.CommandRequest) (*models.ExecuteResponse, error)
+2. 完成所有插件化拓展逻辑。
+3. 完成Validator update的功能。
+4. 新增Validator power限制。
+5. 新增对单独键的所有操作日志查询功能。
+6. 完成Redis监听器。
+7. 完成Redis高可用逻辑。
+8. 完善区块链测的查询接口，新增若干查询功能。
+9. 若干bug fix
+
+## 计划0111-0201：
+1. 系统流程测试，性能测试。包括单机多pod和多物理机测试，
+2. Bug fix
+3. 除go语言外，其他语言客户端支持
+4. 前端页面（待定）
