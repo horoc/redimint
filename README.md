@@ -19,11 +19,13 @@
 - 插件化编程，提供插件接口，可定制化区块生成或操作执行中特定步骤的行为。
 - 多语言客户端支持。
 
+### Redimint 架构
+
+<p align="center"><img src="https://chenzhou-images.oss-cn-shanghai.aliyuncs.com/%E6%95%B0%E6%8D%AE%E5%BA%93%E6%9E%B6%E6%9E%84%E5%9B%BE.png" /></p>
+
 ### TODO
 
 - [X] Redis monitor
-- [ ] 日志切分
-- [ ] Dash board
 - [ ] 使用文档完善
 - [ ] 性能测试
 - [ ] ... ...
