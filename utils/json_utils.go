@@ -26,11 +26,11 @@ func JsonToStruct(j []byte, s interface{}) {
 	}
 }
 
-func ByteToHex(b []byte) string{
-	return fmt.Sprintf("%X",b)
+func ByteToHex(b []byte) string {
+	return fmt.Sprintf("%X", b)
 }
 
-func HexToByte(s string) []byte{
+func HexToByte(s string) []byte {
 	bytes, err := hex.DecodeString(s)
 	if err != nil {
 		logger.Log.Error(err)
@@ -39,8 +39,8 @@ func HexToByte(s string) []byte{
 	return bytes
 }
 
-func SignToHex(b []byte) string{
-	return fmt.Sprintf("%X",b)
+func SignToHex(b []byte) string {
+	return fmt.Sprintf("%X", b)
 }
 
 //percent
@@ -74,6 +74,3 @@ func (p Percent) String() string {
 	b[n] = '.'
 	return string(append(b, '%'))
 }
-
-
-

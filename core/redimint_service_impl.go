@@ -477,7 +477,6 @@ func (s ApplicationService) ConvertBlockData(b *types.Data) *models.Data {
 }
 
 func (s ApplicationService) ConvertCommitSign(b *types.CommitSig) *models.CommitSig {
-
 	return &models.CommitSig{
 		Type:             b.Type,
 		Height:           b.Height,

@@ -31,7 +31,7 @@ func NewRpcClient(address string, password string) (*RpcClient, error) {
 func (r RpcClient) Query(cmd *proto.CommandRequest) (*proto.QueryResponse, error) {
 	response, err := r.app.Query(r.GetContextWithToken(), cmd)
 	if err != nil {
-		if r.CheckExpire(err){
+		if r.CheckExpire(err) {
 			r.UpdateAuth()
 			return r.app.Query(r.GetContextWithToken(), cmd)
 		}
@@ -43,7 +43,7 @@ func (r RpcClient) Query(cmd *proto.CommandRequest) (*proto.QueryResponse, error
 func (r RpcClient) QueryPrivateData(cmd *proto.CommandRequest) (*proto.QueryResponse, error) {
 	response, err := r.app.QueryPrivateData(r.GetContextWithToken(), cmd)
 	if err != nil {
-		if r.CheckExpire(err){
+		if r.CheckExpire(err) {
 			r.UpdateAuth()
 			return r.app.QueryPrivateData(r.GetContextWithToken(), cmd)
 		}
@@ -54,7 +54,7 @@ func (r RpcClient) QueryPrivateData(cmd *proto.CommandRequest) (*proto.QueryResp
 func (r RpcClient) QueryPrivateDataWithAddress(cmd *proto.QueryPrivateWithAddrRequest) (*proto.QueryResponse, error) {
 	response, err := r.app.QueryPrivateDataWithAddress(r.GetContextWithToken(), cmd)
 	if err != nil {
-		if r.CheckExpire(err){
+		if r.CheckExpire(err) {
 			r.UpdateAuth()
 			return r.app.QueryPrivateDataWithAddress(r.GetContextWithToken(), cmd)
 		}
@@ -65,7 +65,7 @@ func (r RpcClient) QueryPrivateDataWithAddress(cmd *proto.QueryPrivateWithAddrRe
 func (r RpcClient) Execute(cmd *proto.CommandRequest) (*proto.ExecuteResponse, error) {
 	response, err := r.app.Execute(r.GetContextWithToken(), cmd)
 	if err != nil {
-		if r.CheckExpire(err){
+		if r.CheckExpire(err) {
 			r.UpdateAuth()
 			return r.app.Execute(r.GetContextWithToken(), cmd)
 		}
@@ -77,7 +77,7 @@ func (r RpcClient) Execute(cmd *proto.CommandRequest) (*proto.ExecuteResponse, e
 func (r RpcClient) ExecuteAsync(cmd *proto.CommandRequest) (*proto.ExecuteAsyncResponse, error) {
 	response, err := r.app.ExecuteAsync(r.GetContextWithToken(), cmd)
 	if err != nil {
-		if r.CheckExpire(err){
+		if r.CheckExpire(err) {
 			r.UpdateAuth()
 			return r.app.ExecuteAsync(r.GetContextWithToken(), cmd)
 		}
@@ -89,7 +89,7 @@ func (r RpcClient) ExecuteAsync(cmd *proto.CommandRequest) (*proto.ExecuteAsyncR
 func (r RpcClient) ExecuteWithPrivateKey(cmd *proto.CommandRequest) (*proto.ExecuteResponse, error) {
 	response, err := r.app.ExecuteWithPrivateKey(r.GetContextWithToken(), cmd)
 	if err != nil {
-		if r.CheckExpire(err){
+		if r.CheckExpire(err) {
 			r.UpdateAuth()
 			return r.app.ExecuteWithPrivateKey(r.GetContextWithToken(), cmd)
 		}

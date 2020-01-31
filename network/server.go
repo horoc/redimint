@@ -58,5 +58,4 @@ func (server *Server) Start() {
 		logger.Log.Error(err)
 		return
 	}
-
 }

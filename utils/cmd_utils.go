@@ -14,7 +14,6 @@ const (
 	DBPID_FILE = "./.redis_pid"
 )
 
-
 func StartRedimintDaemon() {
 	cmd := exec.Command("./redimint", "start", "-a")
 	cmd.Start()

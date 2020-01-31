@@ -12,7 +12,7 @@ func (d DefaultBlockChainPlugin) CustomChainInitMethod() {
 	logger.Log.Info("Default block chain plugin CustomChainInitMethod: do nothing")
 }
 
-func (d DefaultBlockChainPlugin) CustomNewBlockEventMethod(block *models.Block){
+func (d DefaultBlockChainPlugin) CustomNewBlockEventMethod(block *models.Block) {
 	logger.Log.Info("Default block chain plugin CustomNewBlockEventMethod: do nothing")
 }
 
