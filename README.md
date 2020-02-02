@@ -119,7 +119,7 @@ Flags:
 Use "tendermint [command] --help" for more information about a command.
 ```
 
-### Redimint安装
+### Redimint 安装
 
 #### 1. 安装 Go 运行环境 [参考这里](https://golang.org/doc/install)
 要求Go版本>=1.12
@@ -199,7 +199,7 @@ Use "redimint [command] --help" for more information about a command.
 
 ```
 
-启动Redimint服务
+单节点启动Redimint服务
 
 ```bash
 $ cd ./redimint_home/bin
@@ -216,6 +216,67 @@ I[2019-12-26|20:42:41.076] Waiting for new connection...
 I[2019-12-26|20:42:41.076] Accepted a new connection
 I[2019-12-26|20:42:41.076] Waiting for new connection...
 ```
+
+多节点启动Redimint服务:
+
+1.获取每个节点的Node address 
+
+```bash
+$ tendermint show_node_id --home ./redimint_home/chain
+12c1fb57614c43761e8bbe65c4454be11e756267
+```
+
+2.修改config.toml文件, 写入每个节点的address和ip
+
+```bash
+persistent_peers = "12c1fb57614c43761e8bbe65c4454be11e756267@IP0:26656,8a223d1493fa45496a4fa1b054d2a7dd6116b50c@IP1:26656,d46f4422738b543bda1dfae06973896d290385c4@IP2:26656,744a8d89611d584dd88055e6eddf625212705c20@IP3:26656"
+```
+
+3.修改genesis.json文件, 添加validator
+
+```bash
+"validators": [
+    {
+      "address": "540B94741F1A64B787A6D885A0E382A54249B659",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "R1lIn7piIdxfoB/hUSN6kBukTiD27GI2EuiPH6isn4Y="
+      },
+      "power": "1",
+      "name": "node0"
+    },
+    {
+      "address": "B8F3744A0E5DB5411932B2848F0A2C1F47A0B2AD",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "ECfG6qfbiS+1cNDJlVqEzmFkYKRCHpqneCfyjeeFsPg="
+      },
+      "power": "1",
+      "name": "node1"
+    },
+    {
+      "address": "6B760E33FF91A5376F754EFB5E56481ADE93222E",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "no5aL13aED+rlVEvmEp+UjS6JRrsUtXuQRyCQtjeFlg="
+      },
+      "power": "1",
+      "name": "node2"
+    },
+    {
+      "address": "B4B9A08F2965E4E8BA07570FB6CED4024252AC0B",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "vfaA1//UmE76BukRvtG1KftlPQ38SAipdbjPpNKDmq8="
+      },
+      "power": "1",
+      "name": "node3"
+    }
+  ],
+```
+
+4.启动各个节点，启动方式与单节点一致
+
 
 #### 5. 测试
 
@@ -237,6 +298,7 @@ curl -X POST http://localhost:30001/db/execute -H 'Content-Type: application/jso
     }
 }
 ```
+
 
 ## 使用文档
 
