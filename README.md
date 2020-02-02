@@ -178,6 +178,7 @@ make output=my_home_path
 ```bash
 $ cd ./redimint_home/bin
 $ ./redimint
+
 Description:
   Decentralized K-V database based on Redis and Tendermint Blockchain.
 
@@ -204,6 +205,7 @@ Use "redimint [command] --help" for more information about a command.
 ```bash
 $ cd ./redimint_home/bin
 $ ./redimint start
+
 Redis daemon process started
 badger 2019/12/26 20:42:40 INFO: All 0 tables opened in 0s
 Tendermint daemon process started
@@ -223,10 +225,11 @@ I[2019-12-26|20:42:41.076] Waiting for new connection...
 
 ```bash
 $ tendermint show_node_id --home ./redimint_home/chain
+
 12c1fb57614c43761e8bbe65c4454be11e756267
 ```
 
-2.修改config.toml文件, 写入每个节点的address和ip
+2.修改./redimint_home/chain/config/config.toml文件, 写入每个节点的address和ip
 
 ```bash
 persistent_peers = "12c1fb57614c43761e8bbe65c4454be11e756267@IP0:26656,8a223d1493fa45496a4fa1b054d2a7dd6116b50c@IP1:26656,d46f4422738b543bda1dfae06973896d290385c4@IP2:26656,744a8d89611d584dd88055e6eddf625212705c20@IP3:26656"
@@ -283,7 +286,8 @@ persistent_peers = "12c1fb57614c43761e8bbe65c4454be11e756267@IP0:26656,8a223d149
 数据库执行 `set k v ` 指令
 
 ```bash
-curl -X POST http://localhost:30001/db/execute -H 'Content-Type: application/json' -d '{"cmd":"set k v","mode":"commit"}'
+$ curl -X POST http://localhost:30001/db/execute -H 'Content-Type: application/json' -d '{"cmd":"set k v","mode":"commit"}'
+
 {
     "code":0,
     "code_info":"Success!",
@@ -299,6 +303,11 @@ curl -X POST http://localhost:30001/db/execute -H 'Content-Type: application/jso
 }
 ```
 
+#### 6. 退出Redimint
+
+```bash
+$ ./redimint stop   
+```
 
 ## 使用文档
 
