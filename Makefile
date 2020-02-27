@@ -10,8 +10,7 @@ GO_ARCH:=$(shell go env GOARCH)
 GO_ARM:=$(shell go env GOARM)
 GO_FLAGS?=-ldflags "-X 'github.com/chenzhou9513/redimint/cmd.Revision=$(GIT_REV)' -X 'github.com/chenzhou9513/redimint/cmd.Version=$(VERSION)'"
 
-
-ifndef $(output)
+ifndef output
 	OUTPUT:=./redimint_home
 	OUTPUT_BINS:=./redimint_home/bin
 	OUTPUT_CONFS:=./redimint_home/conf
