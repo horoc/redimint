@@ -184,15 +184,19 @@ func (app *LogStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcity
 
 	commitBody := models.TxCommitBody{}
 	utils.JsonToStruct(req.Tx, &commitBody)
+	operationLog := models.OperationLog{
+		Operation: commitBody.Data.Operation,
+		Address:   commitBody.Address,
+		Signature: commitBody.Signature,
+		Time:      time.Now().String(),
+		Height:    strconv.Itoa(int(app.State.currentHeight)),
+		Sequence:  commitBody.Data.Sequence,
+	}
+
 	if app.IsPrivateCommand(commitBody) {
 		if app.initFlag || !strings.EqualFold(commitBody.Address, utils.ValidatorKey.Address.String()) {
 			if !app.privateTxSet.Contains(commitBody.Data.Sequence) {
 				app.ExecuteCommand(commitBody.Data.Operation, ReTry, ReTryTime, true)
-				//_, err := database.ExecuteCommand(commitBody.Data.Operation)
-				//if err != nil {
-				//	logger.Log.Error(err)
-				//	panic(err)
-				//}
 			} else {
 				app.privateTxSet.Remove(commitBody.Data.Sequence)
 
@@ -202,15 +206,12 @@ func (app *LogStoreApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcity
 				app.State.UnLock()
 			}
 		}
+		database.UpdateSingleKeyWriteLog(operationLog)
 		return abcitypes.ResponseDeliverTx{Code: c.CodeTypeOK, Info: c.CodeTypeOKMsg}
 	} else {
 		res := app.ExecuteCommand(commitBody.Data.Operation, ReTry, ReTryTime, true)
-		//res, err := database.ExecuteCommand(commitBody.Data.Operation)
-		//if err != nil {
-		//	logger.Log.Error(err)
-		//	panic(err)
-		//}
 		log := app.plugin.CustomTransactionDeliverLog(req.Tx, res)
+		database.UpdateSingleKeyWriteLog(operationLog)
 		return abcitypes.ResponseDeliverTx{Code: c.CodeTypeOK, Data: []byte("Result:" + res), Log: log}
 	}
 }

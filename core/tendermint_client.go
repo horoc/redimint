@@ -18,7 +18,7 @@ var tendermintHttpClient *c.HTTP
 
 func InitClient() {
 	var host = "tcp://" + utils.Config.Tendermint.Url
-	var wsEndpoint = "./websocket"
+	var wsEndpoint = "/websocket"
 	tendermintHttpClient = c.NewHTTP(host, wsEndpoint)
 }
 

@@ -63,6 +63,27 @@ func GetBadgerVal(key []byte) []byte {
 	return value
 }
 
+func UpdateSingleKeyWriteLog(op models.OperationLog) {
+	key, err := GetKey(op.Operation)
+	if err != nil {
+		logger.Log.Error(err)
+		panic(err)
+	}
+	val := GetBadgerVal([]byte(key))
+	res := &models.OperationKeyLog{
+		Key:          key,
+		OperationLog: make([]models.OperationLog, 0),
+	}
+	if val == nil {
+		res.OperationLog = append(res.OperationLog, op)
+	} else {
+		opLog := &models.OperationKeyLog{}
+		utils.JsonToStruct(val, &opLog)
+		res.OperationLog = append(opLog.OperationLog, op)
+	}
+	UpdateBadgerVal([]byte(key), utils.StructToJson(res))
+}
+
 func UpdateKeyWriteLog(operations []models.OperationLog) {
 	for _, op := range operations {
 		key, err := GetKey(op.Operation)

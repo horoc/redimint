@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/chenzhou9513/redimint/core"
 	"github.com/chenzhou9513/redimint/database"
-	"github.com/chenzhou9513/redimint/ipfs"
 	"github.com/chenzhou9513/redimint/logger"
 	"github.com/chenzhou9513/redimint/network"
 	"github.com/chenzhou9513/redimint/utils"
@@ -37,7 +36,6 @@ func InitService() {
 	utils.InitKey()
 	utils.InitFiles()
 	utils.InitConfig()
-	ipfs.InitIPFS()
 	core.InitClient()
 	core.InitService()
 	logger.InitLogger()

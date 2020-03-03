@@ -2,7 +2,6 @@ package network
 
 import (
 	"fmt"
-	"github.com/chenzhou9513/redimint/core"
 	"github.com/chenzhou9513/redimint/grpc"
 	"github.com/chenzhou9513/redimint/logger"
 	"github.com/chenzhou9513/redimint/routers"
@@ -51,7 +50,7 @@ func (server *Server) Start() {
 	go server.rpcServer.StartServer()
 
 	logger.Log.Infof("Start Command Log Writer ...")
-	go core.AppService.StartCommandLogWriter()
+	//go core.AppService.StartCommandLogWriter()
 
 	logger.Log.Infof("Http Server will be started at :%s...", server.httpPort)
 	if err := server.httpServer.ListenAndServe(); err != nil {

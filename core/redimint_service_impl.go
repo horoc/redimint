@@ -45,12 +45,16 @@ func (s ApplicationService) MakeTxCommitBody(request *models.CommandRequest) *mo
 }
 
 func (s ApplicationService) Execute(request *models.CommandRequest) (*models.ExecuteResponse, error) {
+	time.Sleep(time.Duration(200)*time.Millisecond)
+
 	op := s.MakeTxCommitBody(request)
 	timestamp := time.Now().UnixNano() / 1e6
 	commitMsg, err := BroadcastTxCommit(op)
 	if err != nil {
 		return nil, err
 	}
+
+
 	return &models.ExecuteResponse{
 		Cmd:           request.Cmd,
 		ExecuteResult: string(commitMsg.DeliverTx.Data),
@@ -80,6 +84,7 @@ func (s ApplicationService) ExecuteAsync(request *models.CommandRequest) (*model
 }
 
 func (s ApplicationService) ExecuteWithPrivateKey(request *models.CommandRequest) (*models.ExecuteResponse, error) {
+	time.Sleep(time.Duration(5)*time.Millisecond)
 
 	key, err := database.GetKey(request.Cmd)
 	if err != nil {
@@ -391,9 +396,11 @@ func (s ApplicationService) StartCommandLogWriter() {
 			utils.AppendToDBLogFile(strList)
 		}
 	}
+
 	for {
 		select {
 		case resultEvent := <-out:
+			logger.Log.Info("NewBlock event")
 			block := resultEvent.Data.(types.EventDataNewBlock).Block
 			strList := s.ConvertTransactionsToLogString(block.Txs, block.Height, block.Time.String())
 			logList := s.ConvertTransactionsToCommandLog(block.Txs, block.Height, block.Time.String())
