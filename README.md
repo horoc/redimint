@@ -17,7 +17,10 @@
 - 提供Commit, Private, Async三种数据更新模式，最大化TPS和最小化更新延迟。
 - 兼容几乎所有的Redis操作，使用学习成本低。
 - 插件化编程，提供插件接口，可定制化区块生成或操作执行中特定步骤的行为。
-- 多语言客户端支持。
+
+### Rediminit数据存储逻辑
+
+<p align="center"><img src="https://chenzhou-images.oss-cn-shanghai.aliyuncs.com/%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E8%AF%B4%E6%98%8E.png" /></p>
 
 ### Redimint 架构
 
@@ -200,7 +203,7 @@ Use "redimint [command] --help" for more information about a command.
 
 ```
 
-单节点启动Redimint服务
+单节点启动Redimint服务，后台启动使用 -d
 
 ```bash
 $ cd ./redimint_home/bin
@@ -235,7 +238,7 @@ $ tendermint show_node_id --home ./redimint_home/chain
 persistent_peers = "12c1fb57614c43761e8bbe65c4454be11e756267@IP0:26656,8a223d1493fa45496a4fa1b054d2a7dd6116b50c@IP1:26656,d46f4422738b543bda1dfae06973896d290385c4@IP2:26656,744a8d89611d584dd88055e6eddf625212705c20@IP3:26656"
 ```
 
-3.修改genesis.json文件, 添加validator
+3.修改genesis.json文件, 添加validator (power可自定义，建议不小于10, pub_key由./redimint_home/chain/config/priv_validator_key.json文件里获取)，示例：
 
 ```bash
 "validators": [
@@ -245,7 +248,7 @@ persistent_peers = "12c1fb57614c43761e8bbe65c4454be11e756267@IP0:26656,8a223d149
         "type": "tendermint/PubKeyEd25519",
         "value": "R1lIn7piIdxfoB/hUSN6kBukTiD27GI2EuiPH6isn4Y="
       },
-      "power": "1",
+      "power": "10",
       "name": "node0"
     },
     {
@@ -254,7 +257,7 @@ persistent_peers = "12c1fb57614c43761e8bbe65c4454be11e756267@IP0:26656,8a223d149
         "type": "tendermint/PubKeyEd25519",
         "value": "ECfG6qfbiS+1cNDJlVqEzmFkYKRCHpqneCfyjeeFsPg="
       },
-      "power": "1",
+      "power": "10",
       "name": "node1"
     },
     {
@@ -263,7 +266,7 @@ persistent_peers = "12c1fb57614c43761e8bbe65c4454be11e756267@IP0:26656,8a223d149
         "type": "tendermint/PubKeyEd25519",
         "value": "no5aL13aED+rlVEvmEp+UjS6JRrsUtXuQRyCQtjeFlg="
       },
-      "power": "1",
+      "power": "10",
       "name": "node2"
     },
     {
@@ -272,14 +275,15 @@ persistent_peers = "12c1fb57614c43761e8bbe65c4454be11e756267@IP0:26656,8a223d149
         "type": "tendermint/PubKeyEd25519",
         "value": "vfaA1//UmE76BukRvtG1KftlPQ38SAipdbjPpNKDmq8="
       },
-      "power": "1",
+      "power": "10",
       "name": "node3"
     }
   ],
 ```
 
-4.启动各个节点，启动方式与单节点一致
+4.如果仅用于测试，可以使用test_home目录下的四个已配置好的节点配置文件。
 
+5.启动各个节点，启动方式与单节点一致
 
 #### 5. 测试
 
