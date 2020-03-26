@@ -53,7 +53,6 @@ func (r RedimintService) CheckToken(c context.Context) error {
 
 	respCode := code.CodeTypeOK
 	respMsg := code.CodeTypeOKMsg
-
 	value := c.Value("redimint_token")
 	if value == nil {
 		respCode, respMsg = code.CodeTypeTokenInvalidError, code.CodeTypeTokenInvalidErrorMsg+" : empty"
@@ -94,10 +93,10 @@ func (r RedimintService) Auth(c context.Context, req *proto.AuthRequest) (*proto
 }
 
 func (r RedimintService) Query(c context.Context, req *proto.CommandRequest) (*proto.QueryResponse, error) {
-	err := r.CheckToken(c)
-	if err != nil {
-		return nil, err
-	}
+	//err := r.CheckToken(c)
+	//if err != nil {
+	//	return nil, err
+	//}
 	response, err := core.AppService.Query(&models.CommandRequest{Cmd: req.Cmd})
 	if err != nil {
 		return nil, err
@@ -108,10 +107,10 @@ func (r RedimintService) Query(c context.Context, req *proto.CommandRequest) (*p
 }
 
 func (r RedimintService) QueryPrivateData(c context.Context, req *proto.CommandRequest) (*proto.QueryResponse, error) {
-	err := r.CheckToken(c)
-	if err != nil {
-		return nil, err
-	}
+	//err := r.CheckToken(c)
+	//if err != nil {
+	//	return nil, err
+	//}
 	response, err := core.AppService.QueryPrivateData(&models.CommandRequest{Cmd: req.Cmd})
 	if err != nil {
 		return nil, err
@@ -122,10 +121,10 @@ func (r RedimintService) QueryPrivateData(c context.Context, req *proto.CommandR
 }
 
 func (r RedimintService) QueryPrivateDataWithAddress(c context.Context, req *proto.QueryPrivateWithAddrRequest) (*proto.QueryResponse, error) {
-	err := r.CheckToken(c)
-	if err != nil {
-		return nil, err
-	}
+	//err := r.CheckToken(c)
+	//if err != nil {
+	//	return nil, err
+	//}
 	response, err := core.AppService.QueryPrivateDataWithAddress(&models.QueryPrivateWithAddrRequest{req.Cmd, req.Address})
 	if err != nil {
 		return nil, err
@@ -136,10 +135,10 @@ func (r RedimintService) QueryPrivateDataWithAddress(c context.Context, req *pro
 }
 
 func (r RedimintService) Execute(c context.Context, req *proto.CommandRequest) (*proto.ExecuteResponse, error) {
-	err := r.CheckToken(c)
-	if err != nil {
-		return nil, err
-	}
+	//err := r.CheckToken(c)
+	//if err != nil {
+	//	return nil, err
+	//}
 	response, err := core.AppService.Execute(&models.CommandRequest{Cmd: req.Cmd})
 	if err != nil {
 		return nil, err
@@ -156,10 +155,10 @@ func (r RedimintService) Execute(c context.Context, req *proto.CommandRequest) (
 }
 
 func (r RedimintService) ExecuteAsync(c context.Context, req *proto.CommandRequest) (*proto.ExecuteAsyncResponse, error) {
-	err := r.CheckToken(c)
-	if err != nil {
-		return nil, err
-	}
+	//err := r.CheckToken(c)
+	//if err != nil {
+	//	return nil, err
+	//}
 	response, err := core.AppService.ExecuteAsync(&models.CommandRequest{Cmd: req.Cmd})
 	if err != nil {
 		return nil, err
@@ -174,10 +173,10 @@ func (r RedimintService) ExecuteAsync(c context.Context, req *proto.CommandReque
 }
 
 func (r RedimintService) ExecuteWithPrivateKey(c context.Context, req *proto.CommandRequest) (*proto.ExecuteResponse, error) {
-	err := r.CheckToken(c)
-	if err != nil {
-		return nil, err
-	}
+	//err := r.CheckToken(c)
+	//if err != nil {
+	//	return nil, err
+	//}
 	response, err := core.AppService.ExecuteWithPrivateKey(&models.CommandRequest{Cmd: req.Cmd})
 	if err != nil {
 		return nil, err
