@@ -24,7 +24,7 @@
 
 ### Redimint 架构
 
-<p align="center"><img src="https://chenzhou-images.oss-cn-shanghai.aliyuncs.com/%E6%95%B0%E6%8D%AE%E5%BA%93%E6%9E%B6%E6%9E%84%E5%9B%BE.png" /></p>
+<p align="center"><img src="https://chenzhou-images.oss-cn-shanghai.aliyuncs.com/%E6%95%B0%E6%8D%AE%E5%BA%93%E6%9E%B6%E6%9E%84%E5%9B%BE%20%283%29.png" /></p>
 
 ### TODO
 
