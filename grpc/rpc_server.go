@@ -35,7 +35,7 @@ func NewRpcServer(port string) *Server {
 }
 
 func (s *Server) StartServer() {
-	lis, err := net.Listen("tcp", "127.0.0.1:"+s.port)
+	lis, err := net.Listen("tcp", ":"+s.port)
 	if err != nil {
 		logger.Log.Error("failed to listen: %v", err)
 		return
